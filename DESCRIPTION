@@ -1,0 +1,17 @@
+Package: CDI
+Version: 0.99.0
+Date: 2021-07-06
+Title: Clustering Deviation Index (CDI)
+Description: Single-cell RNA-sequencing (scRNA-seq) is widely used to explore cellular variation. The analysis of scRNA-seq data often starts from clustering cells into subpopulations. This initial step has a high impact on downstream analyses, and hence it is important to be accurate. However, there have not been unsupervised metric designed for scRNA-seq to evaluate clustering performance. Hence, we propose clustering deviation index (CDI), an unsupervised metric based on the modeling of scRNA-seq UMI counts to evaluate clustering of cells.  
+Authors@R: c(person("Jiyuan", "Fang", email = "jfanglovestats@gmail.com", role = c("cre", "aut")), person("Jichun", "Xie", email = "jichun.xie@duke.edu", role = c("ctb")))
+biocViews: SingleCell, Software, Clustering, Visualization, Sequencing
+URL: https://gitlab.oit.duke.edu/jichunxie/xie-lab-software_cdi
+BugReports: https://gitlab.oit.duke.edu/jichunxie/xie-lab-software_cdi/-/issues
+Imports: matrixStats, Seurat, stats, BiocParallel, ggplot2, reshape2, stringr, grDevices, ggsci
+RoxygenNote: 7.1.1
+Depends: R
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+License: GPL-3
+LazyData: true
+Encoding: UTF-8
