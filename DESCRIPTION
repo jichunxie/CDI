@@ -9,7 +9,7 @@ URL: https://gitlab.oit.duke.edu/jichunxie/xie-lab-software_cdi
 BugReports: https://gitlab.oit.duke.edu/jichunxie/xie-lab-software_cdi/-/issues
 Imports: matrixStats, Seurat, stats, BiocParallel, ggplot2, reshape2, stringr, grDevices, ggsci
 RoxygenNote: 7.1.1
-Depends: R
+Depends: R(>= 3.4)
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 License: GPL-3
