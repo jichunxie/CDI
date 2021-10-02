@@ -88,7 +88,7 @@ Second, calculate CDI for each candidate set of cell labels:
 ```{r, calculate_cdi1}
 start_time = Sys.time()
 CDI_return1 = CalculateCDI(sub_gcmat = sub_one_batch_matrix, 
-                           candidate_label_dataframe = one_batch_matrix_label_df[,1:4], 
+                           candidate_label_dataframe = one_batch_matrix_label_df, 
                            batch_label = NULL, 
                            cell_size_factor = one_batch_matrix_size_factor, 
                            ncore = 2)
@@ -226,7 +226,7 @@ two_batch_matrix_size_factor = CDI::SizeFactor(two_batch_matrix)
 
 start_time = Sys.time()
 CDI_return2 = CalculateCDI(sub_gcmat = sub_two_batch_matrix, 
-                           candidate_label_dataframe = two_batch_matrix_label_df[,1:4], 
+                           candidate_label_dataframe = two_batch_matrix_label_df, 
                            batch_label = two_batch_matrix_batch,
                            cell_size_factor = two_batch_matrix_size_factor, 
                            ncore = 2)
