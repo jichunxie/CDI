@@ -19,6 +19,7 @@ knitr::opts_chunk$set(
   fig.width = 5
 )
 
+library(CDI)
 ```
 
 ## Abstract
@@ -65,10 +66,10 @@ knitr::kable(head(one_batch_matrix_label_df[,seq(1, 11, 2)], 3))
 Feature genes are those genes that express differently across cell types. Several methods are available for feature gene selection. Here we propose a new method called working dispersion score (WDS). We select genes with highest WDS as the feature genes.
 
 ```{r, feature_selection}
-feature_gene_indx = CDI::FeatureGeneSelection(gcmat = one_batch_matrix, 
-                                              batch_label = NULL, 
-                                              method = "wds", 
-                                              nfeature = 500)
+feature_gene_indx = FeatureGeneSelection(gcmat = one_batch_matrix, 
+                                         batch_label = NULL, 
+                                         method = "wds", 
+                                         nfeature = 500)
 sub_one_batch_matrix = one_batch_matrix[feature_gene_indx,]
 ```
 
@@ -79,18 +80,18 @@ sub_one_batch_matrix = one_batch_matrix[feature_gene_indx,]
 First, calculate the size factor of each gene with `SizeFactor`. The output of `SizeFactor` will be one of the inputs of `CalculateCDI`. 
 
 ```{r}
-one_batch_matrix_size_factor = CDI::SizeFactor(one_batch_matrix)
+one_batch_matrix_size_factor = SizeFactor(one_batch_matrix)
 ```
 
 Second, calculate CDI for each candidate set of cell labels:
 
 ```{r, calculate_cdi1}
 start_time = Sys.time()
-CDI_return1 = CDI::CalculateCDI(sub_gcmat = sub_one_batch_matrix, 
-                               candidate_label_dataframe = one_batch_matrix_label_df, 
-                               batch_label = NULL, 
-                               cell_size_factor = one_batch_matrix_size_factor, 
-                               ncore = 2)
+CDI_return1 = CalculateCDI(sub_gcmat = sub_one_batch_matrix, 
+                           candidate_label_dataframe = one_batch_matrix_label_df[,1:4], 
+                           batch_label = NULL, 
+                           cell_size_factor = one_batch_matrix_size_factor, 
+                           ncore = 2)
 
 end_time = Sys.time()
 print(difftime(end_time, start_time))
@@ -119,7 +120,7 @@ The cell population in this simulated dataset doesn't have a hierarchical struct
 
 
 ```{r}
-CDI::CDILineplot(cdi_dataframe = CDI_return1, cdi_type = "CDI_BIC")
+CDILineplot(cdi_dataframe = CDI_return1, cdi_type = "CDI_BIC")
 ```
 
 
@@ -130,19 +131,19 @@ A benchmark label set refers to human annotated cell type label set from biomark
 
 
 ```{r}
-CDI::CandidateBenchmarkHeatmap(benchmark_label = one_batch_matrix_celltype,
-                               candidate_label = one_batch_matrix_label_df$KMeans_k5)
+CandidateBenchmarkHeatmap(benchmark_label = one_batch_matrix_celltype,
+                          candidate_label = one_batch_matrix_label_df$KMeans_k5)
 ```
 
 
 We can also calculate the CDI for the benchmark label set as the following:
 
 ```{r}
-benchmark_return1 = CDI::CalculateCDI(sub_gcmat = sub_one_batch_matrix, 
-                                     candidate_label = one_batch_matrix_celltype, 
-                                     batch_label = NULL, 
-                                     cell_size_factor = one_batch_matrix_size_factor, 
-                                     ncore = 2)
+benchmark_return1 = CalculateCDI(sub_gcmat = sub_one_batch_matrix, 
+                                 candidate_label = one_batch_matrix_celltype, 
+                                 batch_label = NULL, 
+                                 cell_size_factor = one_batch_matrix_size_factor, 
+                                 ncore = 2)
 ```
 
 
@@ -150,10 +151,10 @@ The results of benchmark label set can be added to the CDI lineplot:
 
 
 ```{r}
-CDI::CDILineplot(cdi_dataframe = CDI_return1, 
-                 cdi_type = "CDI_BIC",
-                 benchmark_celltype_cdi = benchmark_return1,
-                 benchmark_celltype_ncluster = length(unique(one_batch_matrix_celltype)))
+CDILineplot(cdi_dataframe = CDI_return1, 
+           cdi_type = "CDI_BIC",
+           benchmark_celltype_cdi = benchmark_return1,
+           benchmark_celltype_ncluster = length(unique(one_batch_matrix_celltype)))
 
 ```
 
@@ -210,10 +211,10 @@ knitr::kable(head(two_batch_matrix_label_df[,c(1, 3, 5, 10, 12, 14)], 3))
 **Feature gene selection**
 
 ```{r, feature_selection2}
-feature_gene_indx = CDI::FeatureGeneSelection(gcmat = two_batch_matrix,
-                                              batch_label = two_batch_matrix_batch,
-                                              method = "wds",
-                                              nfeature = 500)
+feature_gene_indx = FeatureGeneSelection(gcmat = two_batch_matrix,
+                                        batch_label = two_batch_matrix_batch,
+                                        method = "wds",
+                                        nfeature = 500)
 sub_two_batch_matrix = two_batch_matrix[feature_gene_indx,]
 ```
 
@@ -224,11 +225,11 @@ sub_two_batch_matrix = two_batch_matrix[feature_gene_indx,]
 two_batch_matrix_size_factor = CDI::SizeFactor(two_batch_matrix)
 
 start_time = Sys.time()
-CDI_return2 = CDI::CalculateCDI(sub_gcmat = sub_two_batch_matrix, 
-                               candidate_label_dataframe = two_batch_matrix_label_df, 
-                               batch_label = two_batch_matrix_batch,
-                               cell_size_factor = two_batch_matrix_size_factor, 
-                               ncore = 2)
+CDI_return2 = CalculateCDI(sub_gcmat = sub_two_batch_matrix, 
+                           candidate_label_dataframe = two_batch_matrix_label_df[,1:4], 
+                           batch_label = two_batch_matrix_batch,
+                           cell_size_factor = two_batch_matrix_size_factor, 
+                           ncore = 2)
 end_time = Sys.time()
 print(difftime(end_time, start_time))
 ```
@@ -243,11 +244,11 @@ knitr::kable(CDI_return2)
 **Calculate the benchmark label set (if available) CDI **
   
 ```{r}
-benchmark_return = CDI::CalculateCDI(sub_gcmat = sub_two_batch_matrix,
-                                     candidate_label = two_batch_matrix_celltype,
-                                     batch_label = two_batch_matrix_batch,
-                                     cell_size_factor = two_batch_matrix_size_factor,
-                                     ncore = 2)
+benchmark_return = CalculateCDI(sub_gcmat = sub_two_batch_matrix,
+                               candidate_label = two_batch_matrix_celltype,
+                               batch_label = two_batch_matrix_batch,
+                               cell_size_factor = two_batch_matrix_size_factor,
+                               ncore = 2)
 ```
 
 
@@ -255,10 +256,10 @@ benchmark_return = CDI::CalculateCDI(sub_gcmat = sub_two_batch_matrix,
   
 ```{r}
 
-CDI::CDILineplot(cdi_dataframe = CDI_return2,
-                 cdi_type = "CDI_BIC",
-                 benchmark_celltype_cdi = benchmark_return,
-                 benchmark_celltype_ncluster = length(unique(two_batch_matrix_celltype))) 
+CDILineplot(cdi_dataframe = CDI_return2,
+           cdi_type = "CDI_BIC",
+           benchmark_celltype_cdi = benchmark_return,
+           benchmark_celltype_ncluster = length(unique(two_batch_matrix_celltype))) 
 ```
 
 
@@ -267,8 +268,8 @@ CDI::CDILineplot(cdi_dataframe = CDI_return2,
   
 
 ```{r}
-CDI::CandidateBenchmarkHeatmap(benchmark_label = two_batch_matrix_celltype,
-                               candidate_label = two_batch_matrix_label_df$KMeans_k5)
+CandidateBenchmarkHeatmap(benchmark_label = two_batch_matrix_celltype,
+                          candidate_label = two_batch_matrix_label_df$KMeans_k5)
 ```
 
 ## Session Information
