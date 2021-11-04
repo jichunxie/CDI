@@ -17,12 +17,6 @@ vignette: >
 
 
 ```{r setup, include = FALSE}
-# knitr::opts_chunk$set(
-#   collapse = TRUE,
-#   comment = "#>",
-#   fig.width = 5
-# )
-
 library(CDI)
 ```
 
@@ -102,7 +96,7 @@ Second, calculate CDI for each candidate set of cell labels:
 ```{r, calculate_cdi1}
 start_time <- Sys.time()
 CDI_return1 <- calculate_CDI(sub_gcmat = sub_one_batch_matrix, 
-	cand_lab_df = one_batch_matrix_label_df[,1:2], 
+	cand_lab_df = one_batch_matrix_label_df, 
 	batch_label = NULL, 
 	cell_size_factor = one_batch_matrix_size_factor,
 	ncore = 1)
@@ -189,7 +183,7 @@ dim(two_batch_matrix)
 
 ```{r, data_label2, out.width="70%"}
 data(two_batch_matrix_label_df, package = "CDI")
-knitr::kable(head(two_batch_matrix_label_df[,c(1, 3, 5, 10, 12, 14)], 3))
+knitr::kable(head(two_batch_matrix_label_df[,c("KMeans_k2", "KMeans_k4", "Seurat_k2", "Seurat_k2")], 3))
 ```
 
 ## Feature gene selection
@@ -209,7 +203,7 @@ two_batch_matrix_size_factor <- size_factor(two_batch_matrix)
 
 start_time <- Sys.time()
 CDI_return2 <- calculate_CDI(sub_gcmat = sub_two_batch_matrix,
-	cand_lab_df = two_batch_matrix_label_df[,1:2], 
+	cand_lab_df = two_batch_matrix_label_df, 
 	batch_label = two_batch_matrix_batch,
 	cell_size_factor = two_batch_matrix_size_factor,
 	ncore = 1)
