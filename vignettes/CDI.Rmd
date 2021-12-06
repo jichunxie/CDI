@@ -54,12 +54,15 @@ CDI provides simulated toy single-cell RNA-seq UMI count matrices for illustrati
 
 
 ```{r, data_reading}
-data(one_batch_matrix_celltype, package = "CDI")
 data(one_batch_matrix, package = "CDI")
-table(one_batch_matrix_celltype)
 dim(one_batch_matrix)
 ```
 
+
+```{r}
+data(one_batch_matrix_celltype, package = "CDI")
+table(one_batch_matrix_celltype)
+```
 
 Here we provide 12 label sets generated from PCA$+$KMeans and Seurat v3.1.5, where the number of clusters range from 2 to 7. 
 
