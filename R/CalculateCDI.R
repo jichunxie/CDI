@@ -11,8 +11,7 @@
 neg_nb_logsum <- function(input_parameter, x_vec, sc_vec){
   mu <- input_parameter[1]
   r <- input_parameter[2]
-  s_mu <- sc_vec * mu
-  return(-sum(dnbinom(x_vec, size = r, mu = s_mu , log = TRUE)))
+  return(-sum(dnbinom(x_vec, size = r, mu = sc_vec * mu, log = TRUE)))
 }
 
 
