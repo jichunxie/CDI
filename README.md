@@ -1,6 +1,6 @@
 ## Clustering Deviance Index (CDI)
 
-This repository is for the R package of Clustering Deviance Index (CDI). 
+This repository stores the R package of the paper Clustering Deviation Index (CDI): A robust and accurate unsupervised measure for evaluating scRNA-seq data clustering. 
 
 ### Installation guidance
 
