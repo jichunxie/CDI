@@ -5,7 +5,8 @@
 \title{Clustering Deviance Index (CDI)}
 \usage{
 calculate_CDI(
-  sub_gcmat,
+  sub_gcmat = NULL,
+  Seurat_obj = NULL,
   cand_lab_df,
   cell_size_factor,
   batch_label = NULL,
@@ -19,6 +20,10 @@ calculate_CDI(
 \item{sub_gcmat}{A raw UMI count matrix where each row represents a gene, and 
 each column represents a cell. The genes should only included feature genes 
 (that are selected by FeatureGeneSelection).}
+
+\item{Seurat_obj}{A Seurat object where the raw count matrix is stored in 
+counts of RNA assay. User can specify either sub_gcmat or Seurat_obj to input the
+raw count matrix.}
 
 \item{cand_lab_df}{A vector of cluster labels of the cells or 
 a data frame where each column corresponds to one set of cluster labels of 
@@ -79,15 +84,18 @@ of models (number of clusters).
 }
 \examples{
 set.seed(100)
-X <- cbind(matrix(c(rnbinom(2500, size = 1, mu = 0.1), 
-rnbinom(2500, size = 1, mu = 0.5)),
-	nrow = 100, byrow = TRUE),
+X <- cbind(
+	matrix(c(rnbinom(2500, size = 1, mu = 0.1),
+		rnbinom(2500, size = 1, mu = 0.5)),
+		nrow = 100, byrow = TRUE),
 	matrix(c(rnbinom(2500, size = 1, mu = 1),
 		rnbinom(2500, size = 1, mu = 0.5)),
 		nrow = 100, byrow = TRUE))
-labs <- data.frame(Method1_k2 = rep(c(1,2), c(50,50)),
-Method1_k3 = rep(c(1,2, 3), c(40,30, 30)))
-calculate_CDI(sub_gcmat = X,
+labs <- data.frame(
+ Method1_k2 = rep(c(1,2), c(50,50)),
+ Method1_k3 = rep(c(1,2, 3), c(40,30, 30)))
+calculate_CDI(
+ sub_gcmat = X,
 	cand_lab_df = labs,
 	batch_label = rep(c(1,2), ncol(X)/2),
 	cell_size_factor = rep(1, 100))

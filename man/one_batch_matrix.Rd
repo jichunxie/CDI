@@ -14,9 +14,12 @@ raw count 2000.
 one_batch_matrix
 }
 \description{
-This matrix was simulated from the Negative Binomial(NB) mixture distribution. 
-More specifically, we simulated 3,000 genes and five group of cells with 400 cells each. 
-Different cell groups have different mean and dispersion parameters in the NB distribution. 
+This matrix contains raw UMI count matrix simulated from the Negative Binomial(NB) mixture distribution.
+}
+\note{
+We simulated 3,000 genes and five group of cells with 400 cells each. 
+Different cell groups have different mean and dispersion parameters in the 
+NB distribution. 
 One group of cells was treated as the baseline group with mean parameters
 generated from truncated Normal with mean and standard deviation 0.2, 0.1 and 
 dispersion generated from truncated with mean and standard deviation 0.5, 0.1. 

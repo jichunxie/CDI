@@ -1,8 +1,16 @@
 #' Simulated count matrix from one batch
 #'
-#' This matrix was simulated from the Negative Binomial(NB) mixture distribution. 
-#' More specifically, we simulated 3,000 genes and five group of cells with 400 cells each. 
-#' Different cell groups have different mean and dispersion parameters in the NB distribution. 
+#' This matrix contains raw UMI count matrix simulated from the Negative Binomial(NB) mixture distribution. 
+#'
+#' @format one_batch_matrix is a matrix with 3,000 genes (rows) and 2,000 cells (columns). 
+#' The rows are named with g1, g2, ..., g3000 representing gene 1 to gene 3000; 
+#' the columns are named with rc1, rc2, ..., rc2000 representing raw count 1 to 
+#' raw count 2000. 
+#' 
+#' @note
+#' We simulated 3,000 genes and five group of cells with 400 cells each. 
+#' Different cell groups have different mean and dispersion parameters in the 
+#' NB distribution. 
 #' One group of cells was treated as the baseline group with mean parameters
 #' generated from truncated Normal with mean and standard deviation 0.2, 0.1 and 
 #' dispersion generated from truncated with mean and standard deviation 0.5, 0.1. 
@@ -13,11 +21,6 @@
 #' The true cell type labels are in 
 #' 'one_batch_matrix_celltype", and the cell clustering results generated from 
 #' two clustering methods are in "one_batch_matrix_label_df".
-#'
-#' @format one_batch_matrix is a matrix with 3,000 genes (rows) and 2,000 cells (columns). 
-#' The rows are named with g1, g2, ..., g3000 representing gene 1 to gene 3000; 
-#' the columns are named with rc1, rc2, ..., rc2000 representing raw count 1 to 
-#' raw count 2000. 
 #' 
 #' 
 "one_batch_matrix"
@@ -50,8 +53,16 @@
 #' Simulated count matrix from two batches
 #'
 #' 
-#' This matrix was simulated from the Negative Binomial(NB) mixture distribution. 
-#' More specifically, we first simulated one batch of cells with 1,000 cells in total. 
+#' This matrix contains raw UMI count matrix simulated from the Negative Binomial(NB) mixture distribution. 
+#'
+#' @format A matrix with 3,000 genes (rows) and 2,000 cells (columns). 
+#' The cells are from 5 cell type, and each cell type contains 400 cells. 
+#' Within each cell type, 200 of cells with odd indices are from batch 1, 
+#' and the other cells with even indices are 
+#' from batch 2. See Note for details of simulation setting. 
+#' 
+#' @note 
+#' We first simulated one batch of cells with 1,000 cells in total. 
 #' Within the batch, we simulated 3,000 genes and five group of cells with 400 cells each. 
 #' One group of cells was treated as the baseline group. The mean parameters
 #' are generated from truncated Normal with mean and standard deviation 0.2, 0.1 and 
@@ -62,13 +73,6 @@
 #' a normalized factor with mean 0 and standard deviation 0.05.
 #' To generate the second batch of cells, we shifted the mean parameters of 
 #' randomly selected 20% genes across all cell types by 0.1. 
-#'
-#' @format A matrix with 3,000 genes (rows) and 2,000 cells (columns). 
-#' The cells are from 5 cell type, and each cell type contains 400 cells. 
-#' Within each cell type, 200 of cells are from batch 1, and the other cells are 
-#' from batch 2. See Note for details of simulation setting. 
-#' 
-#' 
 "two_batch_matrix"
 
 

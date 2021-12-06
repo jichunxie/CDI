@@ -3,7 +3,7 @@
 \docType{package}
 \name{CDI}
 \alias{CDI}
-\title{CDI.}
+\title{Clustering Deviation Index.}
 \description{
 \pkg{CDI} is a package for evaluating clustering results of 
 single cell RNA-seq datasets.

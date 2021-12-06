@@ -7,15 +7,18 @@
 \format{
 A matrix with 3,000 genes (rows) and 2,000 cells (columns). 
 The cells are from 5 cell type, and each cell type contains 400 cells. 
-Within each cell type, 200 of cells are from batch 1, and the other cells are 
+Within each cell type, 200 of cells with odd indices are from batch 1, 
+and the other cells with even indices are 
 from batch 2. See Note for details of simulation setting.
 }
 \usage{
 two_batch_matrix
 }
 \description{
-This matrix was simulated from the Negative Binomial(NB) mixture distribution. 
-More specifically, we first simulated one batch of cells with 1,000 cells in total. 
+This matrix contains raw UMI count matrix simulated from the Negative Binomial(NB) mixture distribution.
+}
+\note{
+We first simulated one batch of cells with 1,000 cells in total. 
 Within the batch, we simulated 3,000 genes and five group of cells with 400 cells each. 
 One group of cells was treated as the baseline group. The mean parameters
 are generated from truncated Normal with mean and standard deviation 0.2, 0.1 and 

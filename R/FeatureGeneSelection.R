@@ -2,13 +2,19 @@
 ##          Internal function -- one_batch_feature_gene_rank
 ## ------------------------------------------------------------------------------------
 ##  rank genes for one batch
-one_batch_feature_gene_rank <- function(gcmat,
+one_batch_feature_gene_rank <- function(
+	gcmat = NULL,
+	Seurat_obj = NULL,
 	method = "wds", 
 	nfeature = 500,
 	zp_threshold = 0.95){
-  ng <- nrow(gcmat)
-  nc <- ncol(gcmat)
-  if(method == "wds"){
+	## Gene selection via wds
+	if(method == "wds"){
+  	if(is.null(gcmat)){
+			gcmat <- as.matrix(Seurat_obj@assays$RNA@counts)
+  	}
+  	ng <- nrow(gcmat)
+  	nc <- ncol(gcmat)
     zp <- rowMeans(gcmat == 0)
     zp_indx <- c(seq_len(ng))[zp < zp_threshold]
     mu_g <- rowMeans(gcmat); var_g <- rowVars(gcmat)
@@ -18,27 +24,28 @@ one_batch_feature_gene_rank <- function(gcmat,
     ## Assign genes with NA rank to a large value to remove NA
     phi_df$phi_rank[is.na(phi_df$phi_rank)] <- ng + 1000
     return(phi_df$phi_rank)
-  }
+	}
+	## Gene selection via vst
   if(method == "vst"){
-    if(is.null(colnames(gcmat))){
-      colnames(gcmat) <- paste0("c", seq_len(nc))
-    }
-    if(is.null(rownames(gcmat))){
-      rownames(gcmat) <- paste0("g", seq_len(ng))
-    }
-    gene_indx_name <- data.frame(indx = c(seq_len(ng)), grank = rep(ng, ng))
-    rownames(gene_indx_name) <- rownames(gcmat)
-    seurat_obj <- CreateSeuratObject(counts = gcmat, min.cells = 0, min.features = 0)
-    seurat_obj <- NormalizeData(seurat_obj, verbose = FALSE)
-    seurat_obj <- FindVariableFeatures(seurat_obj, selection.method = "vst", nfeatures = nfeature, verbose = FALSE)
-    # seu_sig_gname = seurat_obj@assays[["RNA"]]@var.features
-    tmp_df <- data.frame(gname = seurat_obj@assays[["RNA"]]@var.features, 
-    	grank = seq_len(nfeature))
+  	## if no Seurat object input: create a Seurat object
+  	if(is.null(Seurat_obj)){
+  		ng <- nrow(gcmat)
+  		nc <- ncol(gcmat)
+			if(is.null(colnames(gcmat))){
+				colnames(gcmat) <- paste0("c", seq_len(nc))
+				}
+			if(is.null(rownames(gcmat))){
+				rownames(gcmat) <- paste0("g", seq_len(ng))
+				}
+  		gene_indx_name <- data.frame(indx = c(seq_len(ng)), grank = rep(ng, ng))
+  		rownames(gene_indx_name) <- rownames(gcmat)
+  		Seurat_obj <- CreateSeuratObject(counts = as.data.frame(gcmat))
+  	}
+  	Seurat_obj <- NormalizeData(Seurat_obj, verbose = FALSE)
+    Seurat_obj <- FindVariableFeatures(Seurat_obj, selection.method = "vst", nfeatures = nfeature, verbose = FALSE)
+    tmp_df <- data.frame(gname = Seurat_obj@assays[["RNA"]]@var.features, grank = seq_len(nfeature))
     gene_indx_name[as.character(tmp_df$gname), "grank"] <- tmp_df$grank
     return(gene_indx_name$grank)
-  }
-  else{
-    stop("Method not available!")
   }
 }
 
@@ -61,10 +68,12 @@ one_batch_feature_gene_rank <- function(gcmat,
 #'
 #' @param gcmat A raw count matrix where each row represents a gene, 
 #' and each column represents a cell.
+#' @param Seurat_obj A Seurat object where the raw count matrix is stored in 
+#' counts of RNA assay. User can specify either sub_gcmat or Seurat_obj to input the
+#' raw count matrix.
 #' @param method A character indicating the method used to select 
-#' feature genes. "wds" 
-#' (default) represent the working dispersion score proposed in our 
-#' study; "vst" is the default method 
+#' feature genes. "wds" (default) represent the working dispersion score 
+#' proposed in our study; "vst" is the default method.
 #' for feature gene selection in FindVariableFeatures function of Seurat package.
 #' @param nfeature An integer indicating the number of features to select.
 #' @param zp_threshold A number of zero proportion threshold. The range 
@@ -80,10 +89,13 @@ one_batch_feature_gene_rank <- function(gcmat,
 #' row indices of input count matrix.
 #'
 #' @examples
-#' set.seed(100)
-#' X <- cbind(matrix(c(rnbinom(2500, size = 1, mu = 0.1),
-#' 	rnbinom(2500, size = 1, mu = 0.5)),
-#' 	nrow = 100, byrow = TRUE),
+#' ## Simulate a matrix of 100 rows (genes), where the first 50 genes have
+#' ## different mean expression levels.
+#' ## Apply feature_gene_selection to select genes
+#' X <- cbind(
+#' 	matrix(c(rnbinom(2500, size = 1, mu = 0.1),
+#' 		rnbinom(2500, size = 1, mu = 0.5)),
+#' 		nrow = 100, byrow = TRUE),
 #' 	matrix(c(rnbinom(2500, size = 1, mu = 1),
 #' 		rnbinom(2500, size = 1, mu = 0.5)),
 #' 		nrow = 100, byrow = TRUE))
@@ -95,22 +107,45 @@ one_batch_feature_gene_rank <- function(gcmat,
 #'                      
 #' @references Stuart and Butler et al. Comprehensive Integration of Single-Cell Data. Cell (2019) [Seurat V3]
 #' @export
-feature_gene_selection <- function(gcmat, 
+feature_gene_selection <- function(
+	gcmat = NULL, 
+	Seurat_obj = NULL,
 	method = "wds",
 	nfeature = 500,
 	batch_label = NULL,
 	zp_threshold = 0.95){
-  ng <- nrow(gcmat)
-  if(ng < nfeature){
-    stop("The number of feature genes to select exceeds the number of genes.")
-  }
-  if(is.null(batch_label) | (length(unique(batch_label)) == 1)){
-    return(c(seq_len(ng))[(one_batch_feature_gene_rank(gcmat, method = method, nfeature = nfeature, zp_threshold = zp_threshold) <= nfeature)])
+  if((method != "wds") & (method != "vst")){
+		stop("Method not available!")
+	}
+  if((is.null(gcmat)) & (is.null(Seurat_obj))){
+    stop("One of gcmat and Seurat_obj needs to be non-empty!")
   } else{
+  	ng <- ifelse(is.null(Seurat_obj), nrow(gcmat), nrow(Seurat_obj@assays$RNA@counts))
+  	if(ng < nfeature){
+  		stop("The number of feature genes to select exceeds the number of genes.")
+  		}
+  }
+	if(is.null(batch_label) | (length(unique(batch_label)) == 1)){
+  	feature_bool = (one_batch_feature_gene_rank(gcmat = gcmat, 
+  		Seurat_obj = Seurat_obj, 
+  		method = method, 
+  		nfeature = nfeature, 
+  		zp_threshold = zp_threshold) <= nfeature)
+    return(c(seq_len(ng))[feature_bool])
+  } else{
+  	if(is.null(gcmat)){
+			gcmat <- as.matrix(Seurat_obj@assays$RNA@counts)
+  	}
     ## split gcmat columns according to the batch labels
-    mat_list <- lapply(split(seq_along(batch_label), batch_label), function(indx, mat) mat[,indx], mat = gcmat)
+    mat_list <- lapply(split(seq_along(batch_label), batch_label), 
+    	function(indx, mat) mat[,indx], 
+    	mat = gcmat)
     ## rank genes in each matrix
-    gene_rank_list <- lapply(mat_list, one_batch_feature_gene_rank, method = method, nfeature = nfeature, zp_threshold = zp_threshold)
+    gene_rank_list <- lapply(mat_list, 
+    	one_batch_feature_gene_rank, 
+    	method = method, 
+    	nfeature = nfeature, 
+    	zp_threshold = zp_threshold)
     ## return top nfeature genes
     gene_rank_mat <- do.call(cbind, gene_rank_list)
     gene_min_rank <- rowMins(gene_rank_mat)
@@ -120,10 +155,3 @@ feature_gene_selection <- function(gcmat,
   }
   
 }
-
-
-
-
-
-
-

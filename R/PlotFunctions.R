@@ -33,12 +33,11 @@
 #' @importFrom ggplot2 ggplot geom_point geom_line theme theme_bw aes_string element_blank
 #' @return A ggplot object.
 #' @examples
-#' ## This data frame is genearted here for demonstration only:
+#' ## This data frame is generated here for demonstration only:
 #' CDI_return <- data.frame(Cluster_method = c("HC", "HC",  "HC", "KMeans", "KMeans", "KMeans"),
 #' N_cluster = c(2,4,6,2,4,6),
 #' CDI_AIC = c(150, 200, 250, 220, 160, 180),
 #' CDI_BIC = c(170, 210, 280, 250, 180, 200))
-#' 
 #' CDI_lineplot(CDI_return, cdi_type = "CDI_AIC")
 #' benchmark_cdi_return <- list(CDI_AIC = 150, CDI_BIC = 170)
 #' benchmark_ncelltype <- 3
@@ -154,7 +153,16 @@ CDI_lineplot <- function(cdi_dataframe,
 #' @param show_axis_names A bool value indicating whether the axis names 
 #' should be shown or not in the plot. 
 #' @param show_legend A bool value indicating whether the legend of methods 
-#' should be shown or not in the plot. 
+#' should be shown or not in the plot.
+#' @param rename_candidate_clusters A bool value indicating whether the  
+#' candidate cluster names will be changed or not. If true, the candidate
+#' cluster names will be changed to the candidate_cluster_names.
+#' @param candidate_cluster_names A vector of characters indicating the 
+#' candidate cluster names. The order of names will be the same as the order
+#' without customizing the candidate cluster names. For example, when 
+#' rename_candidate_clusters = FALSE, and the output figure has x axis label
+#' (cluster1, cluster0). If rename_candidate_clusters = TRUE, and 
+#' candidate_cluster_names is (c1, c2). That means cluster1 -> c1, and cluster0 -> c0.
 #' @importFrom ggplot2 ggplot geom_tile geom_text theme theme_classic 
 #' aes aes_string element_blank element_line labs scale_fill_gradientn 
 #' scale_x_discrete element_text
@@ -162,53 +170,53 @@ CDI_lineplot <- function(cdi_dataframe,
 #' @importFrom reshape2 melt
 #' @return A ggplot object.
 #' @examples
-#' contingency_heatmap(benchmark_label = c(rep("type_a", 100), 
-#' rep("type_b", 100)), 
-#' candidate_label <- c(rep(1, 150), rep(2, 50)))
+#' contingency_heatmap(
+#' 	benchmark_label = c(rep("type_b", 45), rep("type_a", 145), rep("type_c", 10)),
+#' 	candidate_label = paste0('cluster', c(rep(0,10), rep(1, 180), rep(2, 10))))
+#' contingency_heatmap(
+#' 	benchmark_label = c(rep("type_b", 45), rep("type_a", 145), rep("type_c", 10)),
+#' 	candidate_label = paste0('cluster', c(rep(0,10), rep(1, 180), rep(2, 10))),
+#' 	rename_candidate_clusters = TRUE, 
+#' 	candidate_cluster_names = c('1', '2', '3'))
 #' @export
-
-
-
-
 
 contingency_heatmap <- function(benchmark_label, 
 	candidate_label, 
 	proportion_size = 4,
 	show_axis_names = TRUE,
-	show_legend = TRUE){
-  PropValue = NULL
-  if(any(candidate_label == "0")){
-    labs_new <- as.character(as.numeric(as.character(candidate_label)) +1)
-  } else {
-    labs_new <- candidate_label
-  }
-  ct.mat <- as.matrix(table(data.frame(benchmark_label, candidate_label = labs_new)))
-  prop <- t(round(ct.mat/matrix(rep(colSums(ct.mat), nrow(ct.mat)),
-  	nrow = nrow(ct.mat), byrow = TRUE), 2))
-  prop_indx <- cbind(prop, as.numeric(rownames(prop)))
-  prop_sort <- prop_indx[order(prop_indx[,ncol(prop_indx)]), c(seq_len(ncol(prop)))]
-  longData <- reshape2::melt(prop_sort)
+	show_legend = TRUE,
+	rename_candidate_clusters = FALSE,
+	candidate_cluster_names = NULL){
+  ## create contingency table
+  count_mat <- as.matrix(table(data.frame(benchmark_label, candidate_label)))
+  ## change from counts to proportions
+  col_sum_matrix = matrix(rep(colSums(count_mat), nrow(count_mat)), nrow = nrow(count_mat), byrow = TRUE)
+  ## each row is a candidate class, and each row sums to 1.
+  prop_mat <- t(round(count_mat / col_sum_matrix, 2))
+  longData <- reshape2::melt(prop_mat)
+  ## To avoid the problem of undifined variable
+	PropValue = NULL
   colnames(longData)[3] <- "PropValue"
-  longData<-longData[longData$PropValue != 0, ]
-  colnames(longData)[c(1, 2)] <- c("candidate_label", "benchmark_label")
+  ## remove zero proportions
+  longData <- longData[longData$PropValue != 0, ]
+  ## order benchmark cell types according to the composition of candidate cell types
   order_level <- NULL
   for(cell_type in levels(as.factor(longData$benchmark_label))){
-    large_prop_indx <- which(prop_sort[,cell_type] >= 0.2)
-    large_prop_sort <- large_prop_indx[order(prop[large_prop_indx, cell_type], decreasing = TRUE)]
+    large_prop_indx <- names(which(prop_mat[,cell_type] >= 0.2))
+    large_prop_sort <- large_prop_indx[order(prop_mat[large_prop_indx, cell_type], decreasing = TRUE)]
     distinct_indx <- setdiff(large_prop_sort, order_level)
     order_level <- c(order_level, distinct_indx)
   }
-  p1 <- ggplot(longData, aes(x = factor(candidate_label, levels = order_level), 
-  	y = factor(benchmark_label), fill = PropValue)) + 
-    geom_tile() + 
-    scale_fill_gradientn(limits = c(0,1),
-    	colours = c(rgb(204,204,204, maxColorValue = 255),
-    		rgb(25,150,125, maxColorValue = 255))) + 
+  p1 <- ggplot(longData, 
+  	aes(x = factor(candidate_label, levels = order_level), y = factor(benchmark_label), fill = PropValue)) + 
+    scale_fill_gradientn(limits = c(0,1), 
+    	colours = c(rgb(204,204,204, maxColorValue = 255), rgb(25,150,125, maxColorValue = 255))) + 
     labs(x = "Candidate label", y = "Benchmark label", fill = "Proportion") + 
-    scale_x_discrete(labels = seq_len(length(unique(longData$candidate_label)))) +
-    theme_classic() + 
-    theme(axis.text = element_text(size=10, angle=0, vjust=0.3), 
-    	axis.line = element_line(size = 1))
+    theme_classic() + geom_tile() + 
+    theme(axis.text = element_text(size=10, angle=0, vjust=0.3), axis.line = element_line(size = 1))
+  if(rename_candidate_clusters){
+  	p1 <- p1 + scale_x_discrete(labels = candidate_cluster_names)
+  }
   if(proportion_size){
     p1 <- p1 + geom_text(label = round(longData$PropValue, 2), 
     	size = proportion_size) 
@@ -225,3 +233,63 @@ contingency_heatmap <- function(benchmark_label,
 
 
 
+
+
+
+
+
+
+## old version
+# 
+# contingency_heatmap2 <- function(benchmark_label, 
+# 	candidate_label, 
+# 	proportion_size = 4,
+# 	show_axis_names = TRUE,
+# 	show_legend = TRUE){
+#   PropValue = NULL
+#   if(any(candidate_label == "0")){
+#     labs_new <- as.character(as.numeric(as.character(candidate_label)) +1)
+#   } else {
+#     labs_new <- candidate_label
+#   }
+#   ct.mat <- as.matrix(table(data.frame(benchmark_label, candidate_label = labs_new)))
+#   prop <- t(round(ct.mat/matrix(rep(colSums(ct.mat), nrow(ct.mat)),
+#   	nrow = nrow(ct.mat), byrow = TRUE), 2))
+#   prop_indx <- cbind(prop, as.numeric(rownames(prop)))
+#   prop_sort <- prop_indx[order(prop_indx[,ncol(prop_indx)]), c(seq_len(ncol(prop)))]
+#   longData <- reshape2::melt(prop_sort)
+#   colnames(longData)[3] <- "PropValue"
+#   longData<-longData[longData$PropValue != 0, ]
+#   colnames(longData)[c(1, 2)] <- c("candidate_label", "benchmark_label")
+#   order_level <- NULL
+#   for(cell_type in levels(as.factor(longData$benchmark_label))){
+#     large_prop_indx <- which(prop_sort[,cell_type] >= 0.2)
+#     large_prop_sort <- large_prop_indx[order(prop[large_prop_indx, cell_type], decreasing = TRUE)]
+#     distinct_indx <- setdiff(large_prop_sort, order_level)
+#     order_level <- c(order_level, distinct_indx)
+#   }
+#   p1 <- ggplot(longData, aes(x = factor(candidate_label, levels = order_level), 
+#   	y = factor(benchmark_label), fill = PropValue)) + 
+#     geom_tile() + 
+#     scale_fill_gradientn(limits = c(0,1),
+#     	colours = c(rgb(204,204,204, maxColorValue = 255),
+#     		rgb(25,150,125, maxColorValue = 255))) + 
+#     labs(x = "Candidate label", y = "Benchmark label", fill = "Proportion") + 
+#     scale_x_discrete(labels = seq_len(length(unique(longData$candidate_label)))) +
+#     theme_classic() + 
+#     theme(axis.text = element_text(size=10, angle=0, vjust=0.3), 
+#     	axis.line = element_line(size = 1))
+#   if(proportion_size){
+#     p1 <- p1 + geom_text(label = round(longData$PropValue, 2), 
+#     	size = proportion_size) 
+#   }
+#   if(show_axis_names == FALSE){
+#     p1 <- p1 + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+#   }
+#   if(show_legend == FALSE){
+#     p1 <- p1 + theme(legend.position = "none")
+#   }
+#   return(p1)
+# }
+# 
+# 

@@ -3,13 +3,18 @@
 ## ------------------------------------------------------------------------------------
 
 ## Calculate negative sum of NB log-likelihoods
+#' @param input_parameter values of (mu, r) in NB distribution
+#' @param x_vec a vector of x values as observations from NB distribution
+#' @param sc_vec a vector of size factor s_c in NB(s_c*mu, r)
+#' @importFrom stats dnbinom
+#' @noRd
 neg_nb_logsum <- function(input_parameter, x_vec, sc_vec){
   mu <- input_parameter[1]
   r <- input_parameter[2]
   s_mu <- sc_vec * mu
-  return(sum(-lgamma(x_vec + r) + lgamma(r) + lgamma(x_vec + 1)- x_vec * log(s_mu) 
-             - r*log(r) + (x_vec+r) *log(r + s_mu) ))
+  return(-sum(dnbinom(x_vec, size = r, mu = s_mu , log = TRUE)))
 }
+
 
 ## Calculate MLE of NB distribution with size factor 
 ## per cell-type per gene
@@ -37,7 +42,7 @@ nb_size_mle <- function(x_vec, sc_vec){
 
 ## Calculate the sum of negative likelihood
 ## all cell-type per gene per batch
-one_batch_one_gene_likelihood <- function(gvec, 
+single_batch_one_gene_likelihood <- function(gvec, 
 	candidate_label, 
 	ncluster, 
 	cell_size_factor){
@@ -106,7 +111,7 @@ calculate_CDI_oneset <- function(sub_gcmat,
 	candidate_label, 
 	batch_label = NULL, 
 	cell_size_factor, 
-	bioc_parallel_obj,
+	BPPARAM,
 	lrt_pval_threshold = 0.01){
   original_ncluster <- length(unique(candidate_label))
   
@@ -131,11 +136,11 @@ calculate_CDI_oneset <- function(sub_gcmat,
     }
     sub_gclist <- split(sub_gcmat, f = rownames(sub_gcmat))
     neg_llk_list <- bplapply(sub_gclist, 
-                            one_batch_one_gene_likelihood,  
+                            single_batch_one_gene_likelihood,  
                             candidate_label = candidate_label, 
                             ncluster = ncluster, 
                             cell_size_factor = cell_size_factor, 
-                            BPPARAM = bioc_parallel_obj)
+                            BPPARAM = BPPARAM)
     neg_llk <- sum(unlist(neg_llk_list))
     npara <- ng * original_ncluster * 2
     
@@ -170,7 +175,7 @@ calculate_CDI_oneset <- function(sub_gcmat,
                             batch_ct_list = batch_ct_list, 
                             size_ct_list  = size_ct_list,
                             lrt_pval_threshold = lrt_pval_threshold,
-                            BPPARAM = bioc_parallel_obj)
+                            BPPARAM = BPPARAM)
     neg_llk <- sum(unlist(lapply(neg_llk_list, '[[', 'NegLLK')))
     total_rej <- sum(unlist(lapply(neg_llk_list, '[[', 'nReject')))
     npara <- (ng * original_ncluster + total_rej) * 2
@@ -242,6 +247,9 @@ size_factor <- function(gcmat){
 #' @param sub_gcmat A raw UMI count matrix where each row represents a gene, and 
 #' each column represents a cell. The genes should only included feature genes 
 #' (that are selected by FeatureGeneSelection).
+#' @param Seurat_obj A Seurat object where the raw count matrix is stored in 
+#' counts of RNA assay. User can specify either sub_gcmat or Seurat_obj to input the
+#' raw count matrix.
 #' @param cand_lab_df A vector of cluster labels of the cells or 
 #' a data frame where each column corresponds to one set of cluster labels of 
 #' the cells. This (these) label sets can be clustering results obtained by 
@@ -275,6 +283,7 @@ size_factor <- function(gcmat){
 #' @param ... Optional arguments passed to the MulticoreParam() 
 #' function in the BiocParallel package. By specifying these arguments, users 
 #' can control over how to perform the parallel computing.
+#' @importFrom SingleCellExperiment SingleCellExperiment
 #' @importFrom BiocParallel MulticoreParam bplapply
 #' @importFrom stats nlminb pchisq var
 #' @importFrom matrixStats rowMedians
@@ -288,15 +297,18 @@ size_factor <- function(gcmat){
 #'
 #' @examples
 #' set.seed(100)
-#' X <- cbind(matrix(c(rnbinom(2500, size = 1, mu = 0.1), 
-#' rnbinom(2500, size = 1, mu = 0.5)),
-#' 	nrow = 100, byrow = TRUE),
+#' X <- cbind(
+#' 	matrix(c(rnbinom(2500, size = 1, mu = 0.1),
+#' 		rnbinom(2500, size = 1, mu = 0.5)),
+#' 		nrow = 100, byrow = TRUE),
 #' 	matrix(c(rnbinom(2500, size = 1, mu = 1),
 #' 		rnbinom(2500, size = 1, mu = 0.5)),
 #' 		nrow = 100, byrow = TRUE))
-#' labs <- data.frame(Method1_k2 = rep(c(1,2), c(50,50)),
-#' Method1_k3 = rep(c(1,2, 3), c(40,30, 30)))
-#' calculate_CDI(sub_gcmat = X,
+#' labs <- data.frame(
+#'  Method1_k2 = rep(c(1,2), c(50,50)),
+#'  Method1_k3 = rep(c(1,2, 3), c(40,30, 30)))
+#' calculate_CDI(
+#'  sub_gcmat = X,
 #' 	cand_lab_df = labs,
 #' 	batch_label = rep(c(1,2), ncol(X)/2),
 #' 	cell_size_factor = rep(1, 100))
@@ -309,14 +321,23 @@ size_factor <- function(gcmat){
 
 
 
-calculate_CDI <- function(sub_gcmat,
+calculate_CDI <- function(
+	sub_gcmat = NULL,
+	Seurat_obj = NULL,
 	cand_lab_df, 
 	cell_size_factor, 
 	batch_label = NULL,
 	lrt_pval_threshold = 0.01,
 	clustering_method = NULL,
 	ncore = 1, ...){
-	bioc_parallel_obj = MulticoreParam(ncore, ...)
+	# Initialize a BiocParallel object
+	BPPARAM = MulticoreParam(ncore, ...)
+	if(is.null(sub_gcmat)){
+		sub_gcmat = as.matrix(Seurat_obj@assays$RNA@counts)
+	}
+	if((is.null(sub_gcmat)) & (is.null(Seurat_obj))){
+    stop("One of sub_gcmat and Seurat_obj needs to be non-empty!")
+  } 
 	## check format of arguments
 	if((!is.vector(cand_lab_df)) & (!is.data.frame(cand_lab_df))){
 		stop("Please input a vector or a data frame for cand_lab_df.")
@@ -340,7 +361,7 @@ calculate_CDI <- function(sub_gcmat,
     	candidate_label = unlist(cand_lab_df), 
     	batch_label = batch_label, 
     	cell_size_factor = cell_size_factor, 
-    	bioc_parallel_obj = bioc_parallel_obj, 
+    	BPPARAM = BPPARAM, 
     	lrt_pval_threshold = lrt_pval_threshold))
   
   ## if cand_lab_df is a a data frame with more than one column
@@ -363,7 +384,7 @@ calculate_CDI <- function(sub_gcmat,
     	sub_gcmat = sub_gcmat, 
     	batch_label = batch_label, 
     	cell_size_factor = cell_size_factor,
-    	bioc_parallel_obj = bioc_parallel_obj, 
+    	BPPARAM = BPPARAM, 
     	lrt_pval_threshold = lrt_pval_threshold) 
     cdi_return_df["CDI_AIC"] <- unlist(lapply(cdi_return, "[[", 1))
     cdi_return_df["CDI_BIC"] <- unlist(lapply(cdi_return, "[[", 2))

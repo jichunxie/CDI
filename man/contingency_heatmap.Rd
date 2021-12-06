@@ -9,7 +9,9 @@ contingency_heatmap(
   candidate_label,
   proportion_size = 4,
   show_axis_names = TRUE,
-  show_legend = TRUE
+  show_legend = TRUE,
+  rename_candidate_clusters = FALSE,
+  candidate_cluster_names = NULL
 )
 }
 \arguments{
@@ -28,6 +30,17 @@ should be shown or not in the plot.}
 
 \item{show_legend}{A bool value indicating whether the legend of methods 
 should be shown or not in the plot.}
+
+\item{rename_candidate_clusters}{A bool value indicating whether the
+candidate cluster names will be changed or not. If true, the candidate
+cluster names will be changed to the candidate_cluster_names.}
+
+\item{candidate_cluster_names}{A vector of characters indicating the 
+candidate cluster names. The order of names will be the same as the order
+without customizing the candidate cluster names. For example, when 
+rename_candidate_clusters = FALSE, and the output figure has x axis label
+(cluster1, cluster0). If rename_candidate_clusters = TRUE, and 
+candidate_cluster_names is (c1, c2). That means cluster1 -> c1, and cluster0 -> c0.}
 }
 \value{
 A ggplot object.
@@ -45,7 +58,12 @@ cluster coming from the benchmark types.
 Each column sums to 1.
 }
 \examples{
-contingency_heatmap(benchmark_label = c(rep("type_a", 100), 
-rep("type_b", 100)), 
-candidate_label <- c(rep(1, 150), rep(2, 50)))
+contingency_heatmap(
+	benchmark_label = c(rep("type_b", 45), rep("type_a", 145), rep("type_c", 10)),
+	candidate_label = paste0('cluster', c(rep(0,10), rep(1, 180), rep(2, 10))))
+contingency_heatmap(
+	benchmark_label = c(rep("type_b", 45), rep("type_a", 145), rep("type_c", 10)),
+	candidate_label = paste0('cluster', c(rep(0,10), rep(1, 180), rep(2, 10))),
+	rename_candidate_clusters = TRUE, 
+	candidate_cluster_names = c('1', '2', '3'))
 }

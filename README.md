@@ -7,7 +7,9 @@ This repository is for the R package of Clustering Deviance Index (CDI).
 In R, run the following block of codes:
 
 ```
-remotes::install_github("jichunxie/CDI") 
+if (!requireNamespace("remotes", quietly = TRUE))
+    install.packages("remotes")
+remotes::install_github("jichunxie/CDI", build_vignettes = TRUE) 
 
 ```
 

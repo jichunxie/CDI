@@ -1,4 +1,4 @@
-#' CDI.
+#' Clustering Deviation Index.
 #'
 #' \pkg{CDI} is a package for evaluating clustering results of 
 #' single cell RNA-seq datasets.

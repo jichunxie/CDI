@@ -5,7 +5,8 @@
 \title{Select feature genes}
 \usage{
 feature_gene_selection(
-  gcmat,
+  gcmat = NULL,
+  Seurat_obj = NULL,
   method = "wds",
   nfeature = 500,
   batch_label = NULL,
@@ -16,10 +17,13 @@ feature_gene_selection(
 \item{gcmat}{A raw count matrix where each row represents a gene, 
 and each column represents a cell.}
 
+\item{Seurat_obj}{A Seurat object where the raw count matrix is stored in 
+counts of RNA assay. User can specify either sub_gcmat or Seurat_obj to input the
+raw count matrix.}
+
 \item{method}{A character indicating the method used to select 
-feature genes. "wds" 
-(default) represent the working dispersion score proposed in our 
-study; "vst" is the default method 
+feature genes. "wds" (default) represent the working dispersion score 
+proposed in our study; "vst" is the default method.
 for feature gene selection in FindVariableFeatures function of Seurat package.}
 
 \item{nfeature}{An integer indicating the number of features to select.}
@@ -42,10 +46,13 @@ This function selects a subset of feature genes that are expected to express
 differently across cell types before calculating CDI.
 }
 \examples{
-set.seed(100)
-X <- cbind(matrix(c(rnbinom(2500, size = 1, mu = 0.1),
-	rnbinom(2500, size = 1, mu = 0.5)),
-	nrow = 100, byrow = TRUE),
+## Simulate a matrix of 100 rows (genes), where the first 50 genes have
+## different mean expression levels.
+## Apply feature_gene_selection to select genes
+X <- cbind(
+	matrix(c(rnbinom(2500, size = 1, mu = 0.1),
+		rnbinom(2500, size = 1, mu = 0.5)),
+		nrow = 100, byrow = TRUE),
 	matrix(c(rnbinom(2500, size = 1, mu = 1),
 		rnbinom(2500, size = 1, mu = 0.5)),
 		nrow = 100, byrow = TRUE))

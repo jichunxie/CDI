@@ -76,7 +76,8 @@ knitr::kable(head(one_batch_matrix_label_df[,c("KMeans_k2", "KMeans_k4", "Seurat
 Feature genes are those genes that express differently across cell types. Several methods are available for feature gene selection. Here we propose a new method called working dispersion score (WDS). We select genes with highest WDS as the feature genes.
 
 ```{r, feature_selection}
-feature_gene_indx <- feature_gene_selection(gcmat = one_batch_matrix, 
+feature_gene_indx <- feature_gene_selection(
+	gcmat = one_batch_matrix, 
 	batch_label = NULL, 
 	method = "wds", 
 	nfeature = 500)
@@ -95,8 +96,9 @@ Second, calculate CDI for each candidate set of cell labels:
 
 ```{r, calculate_cdi1}
 start_time <- Sys.time()
-CDI_return1 <- calculate_CDI(sub_gcmat = sub_one_batch_matrix, 
-	cand_lab_df = one_batch_matrix_label_df, 
+CDI_return1 <- calculate_CDI(
+	sub_gcmat = sub_one_batch_matrix, 
+	cand_lab_df = one_batch_matrix_label_df[,c(1,2)], 
 	batch_label = NULL, 
 	cell_size_factor = one_batch_matrix_size_factor,
 	ncore = 1)
@@ -129,7 +131,9 @@ A benchmark label set refers to human annotated cell type label set from biomark
 
 ```{r}
 contingency_heatmap(benchmark_label = one_batch_matrix_celltype,
-	candidate_label = one_batch_matrix_label_df$KMeans_k5)
+	candidate_label = one_batch_matrix_label_df$KMeans_k5,
+	rename_candidate_clusters = TRUE,
+	candidate_cluster_names = paste0('cluster', seq_len(length(unique(one_batch_matrix_label_df$KMeans_k5)))))
 ```
 
 We can also calculate the CDI for the benchmark label set as the following:
@@ -189,7 +193,8 @@ knitr::kable(head(two_batch_matrix_label_df[,c("KMeans_k2", "KMeans_k4", "Seurat
 ## Feature gene selection
 
 ```{r, feature_selection2}
-feature_gene_indx <- feature_gene_selection(gcmat = two_batch_matrix,
+feature_gene_indx <- feature_gene_selection(
+	gcmat = two_batch_matrix,
 	batch_label = two_batch_matrix_batch,
 	method = "wds",
 	nfeature = 500)
@@ -202,8 +207,9 @@ sub_two_batch_matrix <- two_batch_matrix[feature_gene_indx,]
 two_batch_matrix_size_factor <- size_factor(two_batch_matrix)
 
 start_time <- Sys.time()
-CDI_return2 <- calculate_CDI(sub_gcmat = sub_two_batch_matrix,
-	cand_lab_df = two_batch_matrix_label_df, 
+CDI_return2 <- calculate_CDI(
+	sub_gcmat = sub_two_batch_matrix,
+	cand_lab_df = two_batch_matrix_label_df[,c(1,2)], 
 	batch_label = two_batch_matrix_batch,
 	cell_size_factor = two_batch_matrix_size_factor,
 	ncore = 1)
@@ -227,7 +233,6 @@ benchmark_return <- calculate_CDI(sub_gcmat = sub_two_batch_matrix,
 Output visualization:
   
 ```{r}
-
 CDI_lineplot(cdi_dataframe = CDI_return2,
 	cdi_type = "CDI_BIC",
 	benchmark_celltype_cdi = benchmark_return,
@@ -237,8 +242,11 @@ CDI_lineplot(cdi_dataframe = CDI_return2,
 Compare the optimal clustering label set selected by CDI with the benchmark cell type labels:
 
 ```{r}
-contingency_heatmap(benchmark_label = two_batch_matrix_celltype,
-	candidate_label = two_batch_matrix_label_df$KMeans_k5)
+contingency_heatmap(
+	benchmark_label = two_batch_matrix_celltype,
+	candidate_label = two_batch_matrix_label_df$KMeans_k5,
+	rename_candidate_clusters = TRUE,
+	candidate_cluster_names = paste0('cluster', seq_len(length(unique(one_batch_matrix_label_df$KMeans_k5)))))
 ```
 
 # Session Information

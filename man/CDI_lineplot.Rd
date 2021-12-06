@@ -59,12 +59,11 @@ The purple star represents the CDI value for the benchmark (main) cell type labe
 he brown star represents the CDI value for the benchmark sub-type label set.
 }
 \examples{
-## This data frame is genearted here for demonstration only:
+## This data frame is generated here for demonstration only:
 CDI_return <- data.frame(Cluster_method = c("HC", "HC",  "HC", "KMeans", "KMeans", "KMeans"),
 N_cluster = c(2,4,6,2,4,6),
 CDI_AIC = c(150, 200, 250, 220, 160, 180),
 CDI_BIC = c(170, 210, 280, 250, 180, 200))
-
 CDI_lineplot(CDI_return, cdi_type = "CDI_AIC")
 benchmark_cdi_return <- list(CDI_AIC = 150, CDI_BIC = 170)
 benchmark_ncelltype <- 3
