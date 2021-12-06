@@ -13,7 +13,7 @@ remotes::install_github("jichunxie/CDI", build_vignettes = TRUE)
 
 ```
 
-A tutorial of this package can be found in this repository under CDI/vignettes/CDI.html or by running the following block of codes in R:
+A tutorial of this package can be found by running the following block of codes in R:
 
 ```
 library(CDI)
