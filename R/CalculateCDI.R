@@ -216,8 +216,6 @@ calculate_CDI_oneset <- function(sub_gcmat,
 #' size_factor(X)
 #' 
 #' @export
-
-
 size_factor <- function(gcmat){
   gcmat[gcmat == 0] <- 0.5
   nc <- ncol(gcmat)
@@ -317,10 +315,6 @@ size_factor <- function(gcmat){
 #' Thompson and Nitesh Turaga (2021). 
 #' \doi{https://github.com/Bioconductor/BiocParallel}
 #' @export
-
-
-
-
 calculate_CDI <- function(
 	sub_gcmat = NULL,
 	Seurat_obj = NULL,
