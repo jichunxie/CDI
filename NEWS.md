@@ -6,3 +6,8 @@
 
 * Revised according to comments from Luke. Submitted to Bioconductor.
 
+## Changes in version 0.99.3 (2022-06-28)
+
+* Revised according to comments from Luke. The revision mainly focuses on inputting SingleCellExperiment object and parallel computing. Submitted to Bioconductor.
+
+

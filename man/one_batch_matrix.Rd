@@ -11,10 +11,11 @@ the columns are named with rc1, rc2, ..., rc2000 representing raw count 1 to
 raw count 2000.
 }
 \usage{
-one_batch_matrix
+data(one_batch_matrix)
 }
 \description{
-This matrix contains raw UMI count matrix simulated from the Negative Binomial(NB) mixture distribution.
+This matrix contains raw UMI count matrix simulated from the Negative Binomial(NB) mixture distribution. 
+The code simulating this matrix can be found in data-raw/one_batch_simulation.R.
 }
 \note{
 We simulated 3,000 genes and five group of cells with 400 cells each. 
@@ -23,8 +24,8 @@ NB distribution.
 One group of cells was treated as the baseline group with mean parameters
 generated from truncated Normal with mean and standard deviation 0.2, 0.1 and 
 dispersion generated from truncated with mean and standard deviation 0.5, 0.1. 
-For each of the other four groups, 25 genes had mean parameters shifted 
-from the baseline group with log2 fold change 2.4.
+For each of the other four groups, 30 genes had mean parameters shifted 
+from the baseline group with log2 fold change 2.5.
 Dispersion parameters of feature genes were shifted by 
 a normalized factor with mean 0 and standard deviation 0.05.
 The true cell type labels are in 

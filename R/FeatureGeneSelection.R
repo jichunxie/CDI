@@ -1,21 +1,18 @@
-## ------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ##          Internal function -- one_batch_feature_gene_rank
-## ------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ##  rank genes for one batch
 one_batch_feature_gene_rank <- function(
 	gcmat = NULL,
-	Seurat_obj = NULL,
 	method = "wds", 
 	nfeature = 500,
 	zp_threshold = 0.95){
+	## count genes and cells
+	ng <- nrow(gcmat)
+  nc <- ncol(gcmat)
 	## Gene selection via wds
 	if(method == "wds"){
-  	if(is.null(gcmat)){
-			gcmat <- as.matrix(Seurat_obj@assays$RNA@counts)
-  	}
-  	ng <- nrow(gcmat)
-  	nc <- ncol(gcmat)
-    zp <- rowMeans(gcmat == 0)
+		zp <- rowMeans(gcmat == 0)
     zp_indx <- c(seq_len(ng))[zp < zp_threshold]
     mu_g <- rowMeans(gcmat); var_g <- rowVars(gcmat)
     phi_est <- (var_g-mu_g)/mu_g^2
@@ -27,32 +24,34 @@ one_batch_feature_gene_rank <- function(
 	}
 	## Gene selection via vst
   if(method == "vst"){
-  	## if no Seurat object input: create a Seurat object
-  	if(is.null(Seurat_obj)){
-  		ng <- nrow(gcmat)
-  		nc <- ncol(gcmat)
-			if(is.null(colnames(gcmat))){
-				colnames(gcmat) <- paste0("c", seq_len(nc))
-				}
-			if(is.null(rownames(gcmat))){
-				rownames(gcmat) <- paste0("g", seq_len(ng))
-				}
-  		gene_indx_name <- data.frame(indx = c(seq_len(ng)), grank = rep(ng, ng))
-  		rownames(gene_indx_name) <- rownames(gcmat)
-  		Seurat_obj <- CreateSeuratObject(counts = as.data.frame(gcmat))
-  	}
+		if(is.null(colnames(gcmat))){
+			colnames(gcmat) <- paste0("c", seq_len(nc))
+			}
+		if(is.null(rownames(gcmat))){
+			rownames(gcmat) <- paste0("g", seq_len(ng))
+			}
+		gene_indx_name <- data.frame(indx = c(seq_len(ng)), grank = rep(ng, ng))
+		rownames(gene_indx_name) <- rownames(gcmat)
+		Seurat_obj <- CreateSeuratObject(counts = as.data.frame(gcmat))
+		Seurat_obj <- AddMetaData(Seurat_obj, colnames(gcmat), "Cell_name")
   	Seurat_obj <- NormalizeData(Seurat_obj, verbose = FALSE)
-    Seurat_obj <- FindVariableFeatures(Seurat_obj, selection.method = "vst", nfeatures = nfeature, verbose = FALSE)
-    tmp_df <- data.frame(gname = Seurat_obj@assays[["RNA"]]@var.features, grank = seq_len(nfeature))
+    Seurat_obj <- FindVariableFeatures(
+    	Seurat_obj, 
+    	selection.method = "vst", 
+    	nfeatures = nfeature, 
+    	verbose = FALSE)
+    tmp_df <- data.frame(
+    	gname = Seurat_obj@assays[["RNA"]]@var.features, 
+    	grank = seq_len(nfeature))
     gene_indx_name[as.character(tmp_df$gname), "grank"] <- tmp_df$grank
     return(gene_indx_name$grank)
   }
 }
 
 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ##        External function -- feature_gene_selection
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #' Select feature genes
 #' 
 #' This function selects a subset of feature genes that are expected to express 
@@ -60,9 +59,6 @@ one_batch_feature_gene_rank <- function(
 #'
 #' @param gcmat A raw count matrix where each row represents a gene, 
 #' and each column represents a cell.
-#' @param Seurat_obj A Seurat object where the raw count matrix is stored in 
-#' counts of RNA assay. User can specify either sub_gcmat or Seurat_obj to input the
-#' raw count matrix.
 #' @param method A character indicating the method used to select 
 #' feature genes. "wds" (default) represent the working dispersion score 
 #' proposed in our study; "vst" is the default method.
@@ -76,6 +72,7 @@ one_batch_feature_gene_rank <- function(
 #' The length of batch_label 
 #' should be the same as the number of columns in gcmat.
 #' @importFrom matrixStats rowVars rowMins
+#' @importFrom SeuratObject AddMetaData
 #' @importFrom Seurat CreateSeuratObject NormalizeData FindVariableFeatures
 #' @return A vector of indices of selected feature genes corresponding to the 
 #' row indices of input count matrix.
@@ -84,56 +81,88 @@ one_batch_feature_gene_rank <- function(
 #' ## Simulate a matrix of 100 rows (genes), where the first 50 genes have
 #' ## different mean expression levels.
 #' ## Apply feature_gene_selection to select genes
+#' ng = 100; nc = 100
+#' set.seed(1)
 #' X <- cbind(
-#' 	matrix(c(rnbinom(2500, size = 1, mu = 0.1),
-#' 		rnbinom(2500, size = 1, mu = 0.5)),
-#' 		nrow = 100, byrow = TRUE),
-#' 	matrix(c(rnbinom(2500, size = 1, mu = 1),
-#' 		rnbinom(2500, size = 1, mu = 0.5)),
-#' 		nrow = 100, byrow = TRUE))
-#' batches <- rep(c(1,2), ncol(X)/2)
-#' feature_gene_selection(gcmat = X,
-#' 	batch_label = batches,
+#' 	matrix(
+#' 		c(rnbinom(ng*nc/4, size = 1, mu = 0.1),
+#' 			rnbinom(ng*nc/4, size = 1, mu = 0.5)),
+#' 		nrow = ng, 
+#' 		byrow = TRUE),
+#' 	matrix(
+#' 		c(rnbinom(ng*nc/4, size = 1, mu = 1),
+#' 			rnbinom(ng*nc/4, size = 1, mu = 0.5)),
+#' 		nrow = ng, 
+#' 		byrow = TRUE))
+#' colnames(X) <- paste0('c', seq_len(nc))
+#' rownames(X) <- paste0('g', seq_len(ng))
+#' Batches <- rep(seq_len(2), nc/2)
+#' 
+#' ## Input: matrix
+#' feature_gene_selection(
+#' 	gcmat = X,
+#' 	batch_label = Batches,
+#' 	nfeature = 20,
+#' 	zp_threshold = 0.95)
+#' 
+#' 
+#' ## Input: SingleCellExperiment object
+#' library(SingleCellExperiment)
+#' sim_sce <- SingleCellExperiment(
+#'   list(count = X),
+#'   colData = data.frame(
+#'   	Cell_name = colnames(X),
+#' 		batch = Batches),
+#' 	rowData = data.frame(gene_name = rownames(X)))
+#' feature_gene_selection(
+#' 	gcmat = extract_sce(sim_sce, "count", "count"),
+#' 	batch_label = extract_sce(sim_sce, "batch", "batch"),
+#' 	nfeature = 20,
+#' 	zp_threshold = 0.95)
+#' 
+#' 
+#' 
+#' ## Input: Seurat object
+#' library(Seurat)
+#' library(SeuratObject)
+#' sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
+#' sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
+#' sim_seurat <- AddMetaData(sim_seurat, Batches, "Batch")
+#' 
+#' feature_gene_selection(
+#' 	gcmat = extract_seurat(sim_seurat, "count", "counts"),
+#' 	batch_label = extract_seurat(sim_seurat, "batch", "Batch"),
 #' 	nfeature = 20,
 #' 	zp_threshold = 0.95)
 #'                      
-#' @references Stuart and Butler et al. Comprehensive Integration of Single-Cell Data. Cell (2019) [Seurat V3]
+#' @references Stuart and Butler et al. Comprehensive Integration of 
+#' Single-Cell Data. Cell (2019) [Seurat V3]
 #' @export
 feature_gene_selection <- function(
 	gcmat = NULL, 
-	Seurat_obj = NULL,
 	method = "wds",
 	nfeature = 500,
 	batch_label = NULL,
 	zp_threshold = 0.95){
-  if((method != "wds") & (method != "vst")){
-		stop("Method not available!")
-	}
-  if((is.null(gcmat)) & (is.null(Seurat_obj))){
-    stop("One of gcmat and Seurat_obj needs to be non-empty!")
-  } else{
-  	ng <- ifelse(is.null(Seurat_obj), nrow(gcmat), nrow(Seurat_obj@assays$RNA@counts))
-  	if(ng < nfeature){
-  		stop("The number of feature genes to select exceeds the number of genes.")
-  		}
-  }
+	ng <- nrow(gcmat)
+	## One batch
 	if(is.null(batch_label) | (length(unique(batch_label)) == 1)){
-  	feature_bool = (one_batch_feature_gene_rank(gcmat = gcmat, 
-  		Seurat_obj = Seurat_obj, 
+  	feature_bool = (one_batch_feature_gene_rank(
+  		gcmat = gcmat, 
   		method = method, 
   		nfeature = nfeature, 
   		zp_threshold = zp_threshold) <= nfeature)
     return(c(seq_len(ng))[feature_bool])
   } else{
-  	if(is.null(gcmat)){
-			gcmat <- as.matrix(Seurat_obj@assays$RNA@counts)
-  	}
+  	## Multi-batches
     ## split gcmat columns according to the batch labels
-    mat_list <- lapply(split(seq_along(batch_label), batch_label), 
+    mat_list <- lapply(
+    	split(seq_along(batch_label), batch_label), 
     	function(indx, mat) mat[,indx], 
     	mat = gcmat)
     ## rank genes in each matrix
-    gene_rank_list <- lapply(mat_list, 
+    gene_rank_list <- lapply(
+    	mat_list, 
     	one_batch_feature_gene_rank, 
     	method = method, 
     	nfeature = nfeature, 
