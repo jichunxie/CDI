@@ -81,7 +81,7 @@ one_batch_feature_gene_rank <- function(
 #' ## Simulate a matrix of 100 rows (genes), where the first 50 genes have
 #' ## different mean expression levels.
 #' ## Apply feature_gene_selection to select genes
-#' ng = 100; nc = 100
+#' ng <- 100; nc <- 100
 #' set.seed(1)
 #' X <- cbind(
 #' 	matrix(

@@ -84,7 +84,7 @@ for(g in seq_len(para.set$ngene)){
   tmp <- NULL
   for(cl in seq_len(para.set$K)){
     cur.mu <- mu2[g,cl]
-    if(cur.mu == 0){ tmp = c(tmp, rep(0, para.set$b2_ncell[cl]))}
+    if(cur.mu == 0){ tmp <- c(tmp, rep(0, para.set$b2_ncell[cl]))}
     else{ 
     	tmp <- c(tmp, rnbinom(para.set$b2_ncell[cl], mu = cur.mu, size = r[g,cl]))
     	}

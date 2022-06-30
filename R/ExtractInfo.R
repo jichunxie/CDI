@@ -16,11 +16,11 @@
 #' @importFrom SummarizedExperiment assays
 #' @importFrom SummarizedExperiment colData
 #' @return A count matrix if info_type = "count"; A data frame if 
-#' info_type = "label"; A vector of characters if info_type = "batch".
+#' info_type is "label"; A vector of characters if info_type is "batch".
 #'
 #' @examples
 #' ## Simulate count matrix, batch, and cell type labels
-#' ng = 100; nc = 100
+#' ng <- 100; nc <- 100
 #' set.seed(1)
 #' X <- cbind(
 #' 	matrix(
@@ -88,12 +88,12 @@ extract_sce <- function(sce_obj, info_type, info_slot){
 #' @param info_slot Slot(s) in assays$RNA that stores the count matrix, or slot in 
 #' meta.data that saves cluster / batch labels.
 #' @importFrom Seurat CreateSeuratObject
-#' @return A count matrix if info_type = "count"; A data frame if 
-#' info_type = "label"; A vector of characters if info_type = "batch".
+#' @return A count matrix if info_type is "count"; A data frame if 
+#' info_type = "label"; A vector of characters if info_type is "batch".
 #'
 #' @examples
 #' ## Simulate count matrix, batch, and cell type labels
-#' ng = 100; nc = 100
+#' ng <- 100; nc <- 100
 #' set.seed(1)
 #' X <- cbind(
 #' 	matrix(

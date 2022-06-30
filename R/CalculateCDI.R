@@ -167,7 +167,6 @@ calculate_CDI_oneset <- function(
     }
     batch_ct_list <- split(batch_label, f = candidate_label)
     size_ct_list <- split(cell_size_factor, f = candidate_label)
-    # bp = BiocParallel::MulticoreParam(ncore)
     sub_gclist <- split(sub_gcmat, f = rownames(sub_gcmat))
     neg_llk_list <- bplapply(sub_gclist, 
                             multi_batch_one_gene_likelihood,  
