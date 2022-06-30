@@ -15,7 +15,7 @@
 #' @importFrom methods is
 #' @importFrom SummarizedExperiment assays
 #' @importFrom SummarizedExperiment colData
-#' @return A count matrix if info_type = "count"; A data frame if 
+#' @return A count matrix if info_type is "count"; A data frame if 
 #' info_type is "label"; A vector of characters if info_type is "batch".
 #'
 #' @examples
@@ -89,7 +89,7 @@ extract_sce <- function(sce_obj, info_type, info_slot){
 #' meta.data that saves cluster / batch labels.
 #' @importFrom Seurat CreateSeuratObject
 #' @return A count matrix if info_type is "count"; A data frame if 
-#' info_type = "label"; A vector of characters if info_type is "batch".
+#' info_type is "label"; A vector of characters if info_type is "batch".
 #'
 #' @examples
 #' ## Simulate count matrix, batch, and cell type labels

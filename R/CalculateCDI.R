@@ -210,7 +210,7 @@ calculate_CDI_oneset <- function(
 #'
 #' @examples
 #' 
-#' ng = 100; nc = 100
+#' ng <- 100; nc <- 100
 #' set.seed(1)
 #' X <- cbind(
 #' 	matrix(
@@ -319,7 +319,7 @@ size_factor <- function(gcmat){
 #'
 #' @examples
 #' ## Simulate count matrix, batch, and cell type labels
-#' ng = 100; nc = 100
+#' ng <- 100; nc <- 100
 #' set.seed(1)
 #' X <- cbind(
 #' 	matrix(
