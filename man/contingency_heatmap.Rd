@@ -38,8 +38,8 @@ cluster names will be changed to the candidate_cluster_names.}
 \item{candidate_cluster_names}{A vector of characters indicating the 
 candidate cluster names. The order of names will be the same as the order
 without customizing the candidate cluster names. For example, when 
-rename_candidate_clusters = FALSE, and the output figure has x axis label
-(cluster1, cluster0). If rename_candidate_clusters = TRUE, and 
+rename_candidate_clusters is FALSE, and the output figure has x axis label
+(cluster1, cluster0). If rename_candidate_clusters is TRUE, and 
 candidate_cluster_names is (c1, c2). That means cluster1 -> c1, and cluster0 -> c0.}
 }
 \value{

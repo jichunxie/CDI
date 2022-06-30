@@ -60,7 +60,8 @@ he brown star represents the CDI value for the benchmark sub-type label set.
 }
 \examples{
 ## This data frame is generated here for demonstration only:
-CDI_return <- data.frame(Cluster_method = c("HC", "HC",  "HC", "KMeans", "KMeans", "KMeans"),
+CDI_return <- data.frame(
+Cluster_method = c("HC", "HC",  "HC", "KMeans", "KMeans", "KMeans"),
 N_cluster = c(2,4,6,2,4,6),
 CDI_AIC = c(150, 200, 250, 220, 160, 180),
 CDI_BIC = c(170, 210, 280, 250, 180, 200))

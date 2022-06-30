@@ -34,7 +34,8 @@
 #' @return A ggplot object.
 #' @examples
 #' ## This data frame is generated here for demonstration only:
-#' CDI_return <- data.frame(Cluster_method = c("HC", "HC",  "HC", "KMeans", "KMeans", "KMeans"),
+#' CDI_return <- data.frame(
+#' Cluster_method = c("HC", "HC",  "HC", "KMeans", "KMeans", "KMeans"),
 #' N_cluster = c(2,4,6,2,4,6),
 #' CDI_AIC = c(150, 200, 250, 220, 160, 180),
 #' CDI_BIC = c(170, 210, 280, 250, 180, 200))
@@ -160,8 +161,8 @@ CDI_lineplot <- function(cdi_dataframe,
 #' @param candidate_cluster_names A vector of characters indicating the 
 #' candidate cluster names. The order of names will be the same as the order
 #' without customizing the candidate cluster names. For example, when 
-#' rename_candidate_clusters = FALSE, and the output figure has x axis label
-#' (cluster1, cluster0). If rename_candidate_clusters = TRUE, and 
+#' rename_candidate_clusters is FALSE, and the output figure has x axis label
+#' (cluster1, cluster0). If rename_candidate_clusters is TRUE, and 
 #' candidate_cluster_names is (c1, c2). That means cluster1 -> c1, and cluster0 -> c0.
 #' @importFrom ggplot2 ggplot geom_tile geom_text theme theme_classic 
 #' aes aes_string element_blank element_line labs scale_fill_gradientn 
@@ -195,7 +196,7 @@ contingency_heatmap <- function(benchmark_label,
   prop_mat <- t(round(count_mat / col_sum_matrix, 2))
   longData <- reshape2::melt(prop_mat)
   ## To avoid the problem of undifined variable
-	PropValue = NULL
+	PropValue <- NULL
   colnames(longData)[3] <- "PropValue"
   ## remove zero proportions
   longData <- longData[longData$PropValue != 0, ]
