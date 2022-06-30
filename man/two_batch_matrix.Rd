@@ -12,10 +12,12 @@ and the other cells with even indices are
 from batch 2. See Note for details of simulation setting.
 }
 \usage{
-two_batch_matrix
+data(two_batch_matrix)
 }
 \description{
-This matrix contains raw UMI count matrix simulated from the Negative Binomial(NB) mixture distribution.
+This matrix contains raw UMI count matrix simulated from the Negative 
+Binomial(NB) mixture distribution. 
+The code simulating this vector can be found in data-raw/two_batch_simulation.R.
 }
 \note{
 We first simulated one batch of cells with 1,000 cells in total. 
@@ -23,11 +25,11 @@ Within the batch, we simulated 3,000 genes and five group of cells with 400 cell
 One group of cells was treated as the baseline group. The mean parameters
 are generated from truncated Normal with mean and standard deviation 0.2, 0.1 and 
 dispersion generated from truncated with mean and standard deviation 0.5, 0.1. 
-For each of the other four groups, 25 genes had mean parameters shifted 
-from the baseline group with log2 fold change 2.6.
+For each of the other four groups, 30 genes had mean parameters shifted 
+from the baseline group with log2 fold change 2.5.
 Dispersion parameters of feature genes were shifted by 
 a normalized factor with mean 0 and standard deviation 0.05.
 To generate the second batch of cells, we shifted the mean parameters of 
-randomly selected 20% genes across all cell types by 0.1.
+randomly selected 10% genes across all cell types by 0.2.
 }
 \keyword{datasets}

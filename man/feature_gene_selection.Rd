@@ -6,7 +6,6 @@
 \usage{
 feature_gene_selection(
   gcmat = NULL,
-  Seurat_obj = NULL,
   method = "wds",
   nfeature = 500,
   batch_label = NULL,
@@ -16,10 +15,6 @@ feature_gene_selection(
 \arguments{
 \item{gcmat}{A raw count matrix where each row represents a gene, 
 and each column represents a cell.}
-
-\item{Seurat_obj}{A Seurat object where the raw count matrix is stored in 
-counts of RNA assay. User can specify either sub_gcmat or Seurat_obj to input the
-raw count matrix.}
 
 \item{method}{A character indicating the method used to select 
 feature genes. "wds" (default) represent the working dispersion score 
@@ -49,20 +44,62 @@ differently across cell types before calculating CDI.
 ## Simulate a matrix of 100 rows (genes), where the first 50 genes have
 ## different mean expression levels.
 ## Apply feature_gene_selection to select genes
+ng = 100; nc = 100
+set.seed(1)
 X <- cbind(
-	matrix(c(rnbinom(2500, size = 1, mu = 0.1),
-		rnbinom(2500, size = 1, mu = 0.5)),
-		nrow = 100, byrow = TRUE),
-	matrix(c(rnbinom(2500, size = 1, mu = 1),
-		rnbinom(2500, size = 1, mu = 0.5)),
-		nrow = 100, byrow = TRUE))
-batches <- rep(c(1,2), ncol(X)/2)
-feature_gene_selection(gcmat = X,
-	batch_label = batches,
+	matrix(
+		c(rnbinom(ng*nc/4, size = 1, mu = 0.1),
+			rnbinom(ng*nc/4, size = 1, mu = 0.5)),
+		nrow = ng, 
+		byrow = TRUE),
+	matrix(
+		c(rnbinom(ng*nc/4, size = 1, mu = 1),
+			rnbinom(ng*nc/4, size = 1, mu = 0.5)),
+		nrow = ng, 
+		byrow = TRUE))
+colnames(X) <- paste0('c', seq_len(nc))
+rownames(X) <- paste0('g', seq_len(ng))
+Batches <- rep(seq_len(2), nc/2)
+
+## Input: matrix
+feature_gene_selection(
+	gcmat = X,
+	batch_label = Batches,
+	nfeature = 20,
+	zp_threshold = 0.95)
+
+
+## Input: SingleCellExperiment object
+library(SingleCellExperiment)
+sim_sce <- SingleCellExperiment(
+  list(count = X),
+  colData = data.frame(
+  	Cell_name = colnames(X),
+		batch = Batches),
+	rowData = data.frame(gene_name = rownames(X)))
+feature_gene_selection(
+	gcmat = extract_sce(sim_sce, "count", "count"),
+	batch_label = extract_sce(sim_sce, "batch", "batch"),
+	nfeature = 20,
+	zp_threshold = 0.95)
+
+
+
+## Input: Seurat object
+library(Seurat)
+library(SeuratObject)
+sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
+sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
+sim_seurat <- AddMetaData(sim_seurat, Batches, "Batch")
+
+feature_gene_selection(
+	gcmat = extract_seurat(sim_seurat, "count", "counts"),
+	batch_label = extract_seurat(sim_seurat, "batch", "Batch"),
 	nfeature = 20,
 	zp_threshold = 0.95)
                      
 }
 \references{
-Stuart and Butler et al. Comprehensive Integration of Single-Cell Data. Cell (2019) [Seurat V3]
+Stuart and Butler et al. Comprehensive Integration of 
+Single-Cell Data. Cell (2019) [Seurat V3]
 }

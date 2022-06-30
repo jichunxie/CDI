@@ -10,9 +10,10 @@ reference cells. For each cell type, there are 400 cells with the name
 "type1-5".
 }
 \usage{
-one_batch_matrix_celltype
+data(one_batch_matrix_celltype)
 }
 \description{
-This is the true label set corresponds to the cells in the one_batch_matrix.
+This is the true label set corresponds to the cells in the one_batch_matrix. 
+The code simulating this vector can be found in data-raw/one_batch_simulation.R.
 }
 \keyword{datasets}

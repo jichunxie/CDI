@@ -22,12 +22,37 @@ to capture the variation in cell library size.
 }
 \examples{
 
-X <- cbind(matrix(c(rnbinom(2500, size = 1, mu = 0.1), 
-                   rnbinom(2500, size = 1, mu = 0.5)), 
-                 nrow = 100, byrow = TRUE),
-          matrix(c(rnbinom(2500, size = 1, mu = 1), 
-                   rnbinom(2500, size = 1, mu = 0.5)), 
-                 nrow = 100, byrow = TRUE))
+ng = 100; nc = 100
+set.seed(1)
+X <- cbind(
+	matrix(
+		c(rnbinom(ng*nc/4, size = 1, mu = 0.1),
+			rnbinom(ng*nc/4, size = 1, mu = 0.5)),
+		nrow = ng, 
+		byrow = TRUE),
+	matrix(
+		c(rnbinom(ng*nc/4, size = 1, mu = 1),
+			rnbinom(ng*nc/4, size = 1, mu = 0.5)),
+		nrow = ng, 
+		byrow = TRUE))
+colnames(X) <- paste0('c', seq_len(nc))
+rownames(X) <- paste0('g', seq_len(ng))
+
+## Input: matrix
 size_factor(X)
+
+## Input: SingleCellExperiment object
+library(SingleCellExperiment)
+sim_sce <- SingleCellExperiment(
+  list(count = X),
+  colData = data.frame(Cell_name = colnames(X)),
+	 rowData = data.frame(Gene_name = rownames(X)))
+size_factor(extract_sce(sim_sce, "count", "count"))
+
+## Input: Seurat object
+library(Seurat)
+library(SeuratObject)
+sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
+sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
 
 }
