@@ -147,7 +147,6 @@ for(i in seq_len(length(res_vec))){
   	verbose = FALSE)
   seurat_df[,i] <- as.vector(Seurat.obj@meta.data$seurat_clusters)
 }
-# apply(seurat_df, 2, function(x) length(unique(x)))
 
 colnames(seurat_df) <- paste0("Seurat_k", cluster_number)
 
@@ -155,8 +154,6 @@ colnames(seurat_df) <- paste0("Seurat_k", cluster_number)
 one_batch_matrix_label_df <- cbind(kmeans_df, seurat_df)
 save(one_batch_matrix_label_df, file = "./data/one_batch_matrix_label_df.RData")
 
-# data(one_batch_matrix_label_df, package = "CDI")
-# head(one_batch_matrix_label_df, 2)
 
 # ------------------------------------------------------------------------------
 #               Session Information
