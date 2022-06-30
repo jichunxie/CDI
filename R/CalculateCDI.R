@@ -416,7 +416,7 @@ calculate_CDI <- function(
 	BPPARAM = SerialParam()){
 	# Initialize a BiocParallel object
 	## if cand_lab_df is a vector or a data frame with one column
-	vec_1col_df = ifelse(is.vector(cand_lab_df), TRUE, dim(cand_lab_df)[2] == 1)
+	vec_1col_df <- ifelse(is.vector(cand_lab_df), TRUE, dim(cand_lab_df)[2] == 1)
   if(vec_1col_df){
     return(calculate_CDI_oneset(
     	sub_gcmat = sub_gcmat, 
