@@ -1,5 +1,5 @@
 test_calculate_CDI <- function() {
-	ng = 100; nc = 100
+	ng <- 100; nc <- 100
 	set.seed(1)
 	X <- cbind(
 		matrix(
@@ -25,7 +25,7 @@ test_calculate_CDI <- function() {
 
 
 test_size_factor <- function() {
-	ng = 100; nc = 100
+	ng <- 100; nc <- 100
 	set.seed(1)
 	X <- cbind(
 		matrix(
@@ -43,7 +43,7 @@ test_size_factor <- function() {
 }
 
 test_feature_selection <- function() {
-	ng = 100; nc = 100
+	ng <- 100; nc <- 100
 	set.seed(1)
 	X <- cbind(
 		matrix(
@@ -56,7 +56,7 @@ test_feature_selection <- function() {
 				rnbinom(ng*nc/4, size = 1, mu = 0.5)),
 			nrow = ng,
 			byrow = TRUE))
-	nf = 50
+	nf <- nc/2
 	checkEquals(length(feature_gene_selection(X, nfeature = nf)), nf)
 	
 }

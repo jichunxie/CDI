@@ -17,8 +17,8 @@ represent batch labels.}
 colData that saves cluster / batch labels.}
 }
 \value{
-A count matrix if info_type = "count"; A data frame if 
-info_type = "label"; A vector of characters if info_type = "batch".
+A count matrix if info_type is "count"; A data frame if 
+info_type is "label"; A vector of characters if info_type is "batch".
 }
 \description{
 This function extracts count matrix, cell labels, and batch labels from 
@@ -26,7 +26,7 @@ SingleCellExperiment object.
 }
 \examples{
 ## Simulate count matrix, batch, and cell type labels
-ng = 100; nc = 100
+ng <- 100; nc <- 100
 set.seed(1)
 X <- cbind(
 	matrix(

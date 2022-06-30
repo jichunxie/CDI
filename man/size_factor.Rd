@@ -22,7 +22,7 @@ to capture the variation in cell library size.
 }
 \examples{
 
-ng = 100; nc = 100
+ng <- 100; nc <- 100
 set.seed(1)
 X <- cbind(
 	matrix(

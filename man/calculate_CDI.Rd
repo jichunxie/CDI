@@ -75,7 +75,7 @@ of models (number of clusters).
 }
 \examples{
 ## Simulate count matrix, batch, and cell type labels
-ng = 100; nc = 100
+ng <- 100; nc <- 100
 set.seed(1)
 X <- cbind(
 	matrix(
