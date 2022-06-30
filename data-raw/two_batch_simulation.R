@@ -113,9 +113,8 @@ two_batch_matrix_batch <- paste0("batch",
 
 ## compress the count matrix
 usethis::use_data(two_batch_matrix, compress = "bzip2", overwrite=TRUE)
-# save(two_batch_matrix, file = "./data/two_batch_matrix.RData")
-# save(two_batch_matrix_celltype, 
-# 	file = "./data/two_batch_matrix_celltype.RData")
+save(two_batch_matrix_celltype,
+	file = "./data/two_batch_matrix_celltype.RData")
 save(two_batch_matrix_batch, 
 	file = "./data/two_batch_matrix_batch.RData")
 

@@ -190,7 +190,7 @@ contingency_heatmap <- function(benchmark_label,
   ## create contingency table
   count_mat <- as.matrix(table(data.frame(benchmark_label, candidate_label)))
   ## change from counts to proportions
-  col_sum_matrix = matrix(rep(colSums(count_mat), nrow(count_mat)), nrow = nrow(count_mat), byrow = TRUE)
+  col_sum_matrix <- matrix(rep(colSums(count_mat), nrow(count_mat)), nrow = nrow(count_mat), byrow = TRUE)
   ## each row is a candidate class, and each row sums to 1.
   prop_mat <- t(round(count_mat / col_sum_matrix, 2))
   longData <- reshape2::melt(prop_mat)
