@@ -6,24 +6,18 @@
 \usage{
 calculate_CDI(
   sub_gcmat = NULL,
-  Seurat_obj = NULL,
   cand_lab_df,
   cell_size_factor,
   batch_label = NULL,
   lrt_pval_threshold = 0.01,
   clustering_method = NULL,
-  ncore = 1,
-  ...
+  BPPARAM = SerialParam()
 )
 }
 \arguments{
 \item{sub_gcmat}{A raw UMI count matrix where each row represents a gene, and 
 each column represents a cell. The genes should only included feature genes 
 (that are selected by FeatureGeneSelection).}
-
-\item{Seurat_obj}{A Seurat object where the raw count matrix is stored in 
-counts of RNA assay. User can specify either sub_gcmat or Seurat_obj to input the
-raw count matrix.}
 
 \item{cand_lab_df}{A vector of cluster labels of the cells or 
 a data frame where each column corresponds to one set of cluster labels of 
@@ -57,13 +51,10 @@ NB model will be fitted. Otherwise, a batch-common NB model will be fitted.}
 method for each label set. The length of the vector needs to be the same 
 as the number of columns in cand_lab_df.}
 
-\item{ncore}{An interger indicating the number of cores to use for parallel computing. 
-It will be passed to the `workers` argument of MulticoreParam() function in the 
-BiocParallel package.}
-
-\item{...}{Optional arguments passed to the MulticoreParam() 
-function in the BiocParallel package. By specifying these arguments, users 
-can control over how to perform the parallel computing.}
+\item{BPPARAM}{A \code{\link{BiocParallelParam}} object from the BiocParallel 
+package. By specifying this argument, users can control over how to perform 
+the parallel computing. Default is \code{\link{SerialParam}} which uses a 
+single core.}
 }
 \value{
 calculate_CDI returns a list of CDI-AIC and CDI-BIC values if the cand_lab_df 
@@ -83,22 +74,88 @@ to select optimal subtypes, because BIC puts more penalty on the complexity
 of models (number of clusters).
 }
 \examples{
-set.seed(100)
+## Simulate count matrix, batch, and cell type labels
+ng = 100; nc = 100
+set.seed(1)
 X <- cbind(
-	matrix(c(rnbinom(2500, size = 1, mu = 0.1),
-		rnbinom(2500, size = 1, mu = 0.5)),
-		nrow = 100, byrow = TRUE),
-	matrix(c(rnbinom(2500, size = 1, mu = 1),
-		rnbinom(2500, size = 1, mu = 0.5)),
-		nrow = 100, byrow = TRUE))
-labs <- data.frame(
- Method1_k2 = rep(c(1,2), c(50,50)),
- Method1_k3 = rep(c(1,2, 3), c(40,30, 30)))
+	matrix(
+		c(rnbinom(ng*nc/4, size = 1, mu = 0.1),
+			rnbinom(ng*nc/4, size = 1, mu = 0.5)),
+		nrow = ng,
+		byrow = TRUE),
+	matrix(
+		c(rnbinom(ng*nc/4, size = 1, mu = 1),
+			rnbinom(ng*nc/4, size = 1, mu = 0.5)),
+		nrow = ng,
+		byrow = TRUE))
+colnames(X) <- paste0('c', seq_len(nc))
+rownames(X) <- paste0('g', seq_len(ng))
+Batches <- rep(seq_len(2), nc/2)
+Method1_k2 <- rep(seq_len(2), c(nc/2,nc/2))
+Method1_k3 <- sample(seq_len(3), nc, replace = TRUE)
+label_df <- data.frame(
+	Method1_k2 = Method1_k2, 
+	Method1_k3 = Method1_k3)
+
+## select feature genes (see feature_gene_selection function)
+feature_gene <- seq_len(30)
+
+## calculate size factor (see size_factor function)
+size_factor_vec <- rep(1, nc)
+
 calculate_CDI(
- sub_gcmat = X,
-	cand_lab_df = labs,
-	batch_label = rep(c(1,2), ncol(X)/2),
-	cell_size_factor = rep(1, 100))
+	sub_gcmat = X[feature_gene, ],
+	cand_lab_df = label_df, 
+	cell_size_factor = size_factor_vec, 
+	batch_label = Batches)
+
+
+## Input: SingleCellExperiment object
+library(SingleCellExperiment)
+sim_sce <- SingleCellExperiment(
+  list(count = X),
+  colData = data.frame(
+    Cell_name = colnames(X),
+		 Batch = Batches,
+  	 Method1_k2 = Method1_k2,
+  	 Method1_k3 = Method1_k3),
+	rowData = data.frame(Gene_name = rownames(X)))
+
+calculate_CDI(
+	sub_gcmat = extract_sce(sim_sce, "count", "count")[feature_gene, ],
+	cand_lab_df = extract_sce(sim_sce, "label", c("Method1_k2", "Method1_k3")), 
+	cell_size_factor = size_factor_vec, 
+	batch_label = extract_sce(sim_sce, "batch", "Batch"))
+
+## Input: Seurat object
+library(Seurat)
+library(SeuratObject)
+sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
+sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
+sim_seurat <- AddMetaData(sim_seurat, Batches, "Batch")
+sim_seurat <- AddMetaData(sim_seurat, Method1_k2, "Method1_k2")
+sim_seurat <- AddMetaData(sim_seurat, Method1_k3, "Method1_k3")
+
+calculate_CDI(
+	sub_gcmat = extract_seurat(sim_seurat, "count", "counts")[feature_gene, ],
+	cand_lab_df = extract_seurat(sim_seurat, "label", c("Method1_k2", "Method1_k3")), 
+	cell_size_factor = size_factor_vec, 
+	batch_label = extract_seurat(sim_seurat, "batch", "Batch"))
+	
+## parallel computing
+library(BiocParallel)
+## single core
+bp_object <- SerialParam()
+## multi-cores
+## bp_object  <- MulticoreParam(workers = 2)
+calculate_CDI(
+	sub_gcmat = X[feature_gene, ],
+	cand_lab_df = label_df, 
+	cell_size_factor = size_factor_vec, 
+	batch_label = Batches,
+	lrt_pval_threshold = 0.01,
+	clustering_method = NULL,
+	BPPARAM = bp_object)
              
 }
 \references{

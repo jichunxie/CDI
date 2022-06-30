@@ -10,7 +10,7 @@ in two_batch_matrix.
 For each cell type, there are 400 cells with the name "type1-5".
 }
 \usage{
-two_batch_matrix_celltype
+data(two_batch_matrix_celltype)
 }
 \description{
 This is the true label set corresponds to the cells in the two_batch_matrix.

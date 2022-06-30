@@ -1,6 +1,6 @@
-## ------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ##          Internal functions
-## ------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 
 ## Calculate negative sum of NB log-likelihoods
 #' @param input_parameter values of (mu, r) in NB distribution
@@ -41,7 +41,8 @@ nb_size_mle <- function(x_vec, sc_vec){
 
 ## Calculate the sum of negative likelihood
 ## all cell-type per gene per batch
-single_batch_one_gene_likelihood <- function(gvec, 
+single_batch_one_gene_likelihood <- function(
+	gvec, 
 	candidate_label, 
 	ncluster, 
 	cell_size_factor){
@@ -106,7 +107,8 @@ multi_batch_one_gene_likelihood <- function(gvec,
 
 
 ## Calculate the CDI values for one label set
-calculate_CDI_oneset <- function(sub_gcmat, 
+calculate_CDI_oneset <- function(
+	sub_gcmat, 
 	candidate_label, 
 	batch_label = NULL, 
 	cell_size_factor, 
@@ -179,8 +181,11 @@ calculate_CDI_oneset <- function(sub_gcmat,
     total_rej <- sum(unlist(lapply(neg_llk_list, '[[', 'nReject')))
     npara <- (ng * original_ncluster + total_rej) * 2
   }
-  return(list(CDI_AIC = 2*neg_llk + 2*npara,
-              CDI_BIC = 2*neg_llk + npara*log(nc)))
+  return(data.frame(
+  	CDI_AIC = 2*neg_llk + 2*npara, 
+  	CDI_BIC = 2*neg_llk + npara*log(nc), 
+  	neg_llk_val =  neg_llk,
+  	N_cluster = original_ncluster))
   
 }
 
@@ -188,9 +193,9 @@ calculate_CDI_oneset <- function(sub_gcmat,
 
 
 
-## ------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ##          External function -- size_factor
-## ------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #' Size factor of each cell
 #' 
 #' Different cells have different library size. 
@@ -206,13 +211,38 @@ calculate_CDI_oneset <- function(sub_gcmat,
 #'
 #' @examples
 #' 
-#' X <- cbind(matrix(c(rnbinom(2500, size = 1, mu = 0.1), 
-#'                    rnbinom(2500, size = 1, mu = 0.5)), 
-#'                  nrow = 100, byrow = TRUE),
-#'           matrix(c(rnbinom(2500, size = 1, mu = 1), 
-#'                    rnbinom(2500, size = 1, mu = 0.5)), 
-#'                  nrow = 100, byrow = TRUE))
+#' ng = 100; nc = 100
+#' set.seed(1)
+#' X <- cbind(
+#' 	matrix(
+#' 		c(rnbinom(ng*nc/4, size = 1, mu = 0.1),
+#' 			rnbinom(ng*nc/4, size = 1, mu = 0.5)),
+#' 		nrow = ng, 
+#' 		byrow = TRUE),
+#' 	matrix(
+#' 		c(rnbinom(ng*nc/4, size = 1, mu = 1),
+#' 			rnbinom(ng*nc/4, size = 1, mu = 0.5)),
+#' 		nrow = ng, 
+#' 		byrow = TRUE))
+#' colnames(X) <- paste0('c', seq_len(nc))
+#' rownames(X) <- paste0('g', seq_len(ng))
+#' 
+#' ## Input: matrix
 #' size_factor(X)
+#' 
+#' ## Input: SingleCellExperiment object
+#' library(SingleCellExperiment)
+#' sim_sce <- SingleCellExperiment(
+#'   list(count = X),
+#'   colData = data.frame(Cell_name = colnames(X)),
+#' 	 rowData = data.frame(Gene_name = rownames(X)))
+#' size_factor(extract_sce(sim_sce, "count", "count"))
+#' 
+#' ## Input: Seurat object
+#' library(Seurat)
+#' library(SeuratObject)
+#' sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
+#' sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
 #' 
 #' @export
 size_factor <- function(gcmat){
@@ -226,9 +256,9 @@ size_factor <- function(gcmat){
 }
 
 
-## ------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ##          External function -- calculate_CDI
-## ------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 
 #' Clustering Deviance Index (CDI)
 #'
@@ -244,9 +274,6 @@ size_factor <- function(gcmat){
 #' @param sub_gcmat A raw UMI count matrix where each row represents a gene, and 
 #' each column represents a cell. The genes should only included feature genes 
 #' (that are selected by FeatureGeneSelection).
-#' @param Seurat_obj A Seurat object where the raw count matrix is stored in 
-#' counts of RNA assay. User can specify either sub_gcmat or Seurat_obj to input the
-#' raw count matrix.
 #' @param cand_lab_df A vector of cluster labels of the cells or 
 #' a data frame where each column corresponds to one set of cluster labels of 
 #' the cells. This (these) label sets can be clustering results obtained by 
@@ -274,17 +301,16 @@ size_factor <- function(gcmat){
 #' @param clustering_method A vector of characters indicating the corresponding clustering 
 #' method for each label set. The length of the vector needs to be the same 
 #' as the number of columns in cand_lab_df.
-#' @param ncore An interger indicating the number of cores to use for parallel computing. 
-#' It will be passed to the `workers` argument of MulticoreParam() function in the 
-#' BiocParallel package.
-#' @param ... Optional arguments passed to the MulticoreParam() 
-#' function in the BiocParallel package. By specifying these arguments, users 
-#' can control over how to perform the parallel computing.
+#' @param BPPARAM A \code{\link{BiocParallelParam}} object from the BiocParallel 
+#' package. By specifying this argument, users can control over how to perform 
+#' the parallel computing. Default is \code{\link{SerialParam}} which uses a 
+#' single core.
+#'        
+#'        
 #' @importFrom SingleCellExperiment SingleCellExperiment
-#' @importFrom BiocParallel MulticoreParam bplapply
+#' @importFrom BiocParallel SerialParam bplapply
 #' @importFrom stats nlminb pchisq var
 #' @importFrom matrixStats rowMedians
-#' @importFrom stringr str_detect
 #' @return calculate_CDI returns a list of CDI-AIC and CDI-BIC values if the cand_lab_df 
 #' is a vector or a data frame with 1 column. It returns a data frame with 5 columns if the 
 #' cand_lab_df is a data frame with multiple columns. In the second case, the columns are 
@@ -293,22 +319,88 @@ size_factor <- function(gcmat){
 #' 
 #'
 #' @examples
-#' set.seed(100)
+#' ## Simulate count matrix, batch, and cell type labels
+#' ng = 100; nc = 100
+#' set.seed(1)
 #' X <- cbind(
-#' 	matrix(c(rnbinom(2500, size = 1, mu = 0.1),
-#' 		rnbinom(2500, size = 1, mu = 0.5)),
-#' 		nrow = 100, byrow = TRUE),
-#' 	matrix(c(rnbinom(2500, size = 1, mu = 1),
-#' 		rnbinom(2500, size = 1, mu = 0.5)),
-#' 		nrow = 100, byrow = TRUE))
-#' labs <- data.frame(
-#'  Method1_k2 = rep(c(1,2), c(50,50)),
-#'  Method1_k3 = rep(c(1,2, 3), c(40,30, 30)))
+#' 	matrix(
+#' 		c(rnbinom(ng*nc/4, size = 1, mu = 0.1),
+#' 			rnbinom(ng*nc/4, size = 1, mu = 0.5)),
+#' 		nrow = ng,
+#' 		byrow = TRUE),
+#' 	matrix(
+#' 		c(rnbinom(ng*nc/4, size = 1, mu = 1),
+#' 			rnbinom(ng*nc/4, size = 1, mu = 0.5)),
+#' 		nrow = ng,
+#' 		byrow = TRUE))
+#' colnames(X) <- paste0('c', seq_len(nc))
+#' rownames(X) <- paste0('g', seq_len(ng))
+#' Batches <- rep(seq_len(2), nc/2)
+#' Method1_k2 <- rep(seq_len(2), c(nc/2,nc/2))
+#' Method1_k3 <- sample(seq_len(3), nc, replace = TRUE)
+#' label_df <- data.frame(
+#' 	Method1_k2 = Method1_k2, 
+#' 	Method1_k3 = Method1_k3)
+#' 
+#' ## select feature genes (see feature_gene_selection function)
+#' feature_gene <- seq_len(30)
+#' 
+#' ## calculate size factor (see size_factor function)
+#' size_factor_vec <- rep(1, nc)
+#' 
 #' calculate_CDI(
-#'  sub_gcmat = X,
-#' 	cand_lab_df = labs,
-#' 	batch_label = rep(c(1,2), ncol(X)/2),
-#' 	cell_size_factor = rep(1, 100))
+#' 	sub_gcmat = X[feature_gene, ],
+#' 	cand_lab_df = label_df, 
+#' 	cell_size_factor = size_factor_vec, 
+#' 	batch_label = Batches)
+#' 
+#' 
+#' ## Input: SingleCellExperiment object
+#' library(SingleCellExperiment)
+#' sim_sce <- SingleCellExperiment(
+#'   list(count = X),
+#'   colData = data.frame(
+#'     Cell_name = colnames(X),
+#' 		 Batch = Batches,
+#'   	 Method1_k2 = Method1_k2,
+#'   	 Method1_k3 = Method1_k3),
+#' 	rowData = data.frame(Gene_name = rownames(X)))
+#' 
+#' calculate_CDI(
+#' 	sub_gcmat = extract_sce(sim_sce, "count", "count")[feature_gene, ],
+#' 	cand_lab_df = extract_sce(sim_sce, "label", c("Method1_k2", "Method1_k3")), 
+#' 	cell_size_factor = size_factor_vec, 
+#' 	batch_label = extract_sce(sim_sce, "batch", "Batch"))
+#' 
+#' ## Input: Seurat object
+#' library(Seurat)
+#' library(SeuratObject)
+#' sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
+#' sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
+#' sim_seurat <- AddMetaData(sim_seurat, Batches, "Batch")
+#' sim_seurat <- AddMetaData(sim_seurat, Method1_k2, "Method1_k2")
+#' sim_seurat <- AddMetaData(sim_seurat, Method1_k3, "Method1_k3")
+#' 
+#' calculate_CDI(
+#' 	sub_gcmat = extract_seurat(sim_seurat, "count", "counts")[feature_gene, ],
+#' 	cand_lab_df = extract_seurat(sim_seurat, "label", c("Method1_k2", "Method1_k3")), 
+#' 	cell_size_factor = size_factor_vec, 
+#' 	batch_label = extract_seurat(sim_seurat, "batch", "Batch"))
+#' 	
+#' ## parallel computing
+#' library(BiocParallel)
+#' ## single core
+#' bp_object <- SerialParam()
+#' ## multi-cores
+#' ## bp_object  <- MulticoreParam(workers = 2)
+#' calculate_CDI(
+#' 	sub_gcmat = X[feature_gene, ],
+#' 	cand_lab_df = label_df, 
+#' 	cell_size_factor = size_factor_vec, 
+#' 	batch_label = Batches,
+#' 	lrt_pval_threshold = 0.01,
+#' 	clustering_method = NULL,
+#' 	BPPARAM = bp_object)
 #'              
 #' @references SMartin Morgan, Valerie Obenchain, Michel Lang, Ryan 
 #' Thompson and Nitesh Turaga (2021). 
@@ -316,72 +408,48 @@ size_factor <- function(gcmat){
 #' @export
 calculate_CDI <- function(
 	sub_gcmat = NULL,
-	Seurat_obj = NULL,
 	cand_lab_df, 
 	cell_size_factor, 
 	batch_label = NULL,
 	lrt_pval_threshold = 0.01,
 	clustering_method = NULL,
-	ncore = 1, ...){
+	BPPARAM = SerialParam()){
 	# Initialize a BiocParallel object
-	BPPARAM = MulticoreParam(ncore, ...)
-	if(is.null(sub_gcmat)){
-		sub_gcmat = as.matrix(Seurat_obj@assays$RNA@counts)
-	}
-	if((is.null(sub_gcmat)) & (is.null(Seurat_obj))){
-    stop("One of sub_gcmat and Seurat_obj needs to be non-empty!")
-  } 
-	## check format of arguments
-	if((!is.vector(cand_lab_df)) & (!is.data.frame(cand_lab_df))){
-		stop("Please input a vector or a data frame for cand_lab_df.")
-	}
-	if(!is.matrix(sub_gcmat)){
-		stop("Please input a matrix for sub_gcmat.")
-	}
-	if(!is.vector(cell_size_factor)){
-		stop("Please input a numerical vector for cell_size_factor.")
-	}
-	if((!is.null(batch_label)) & (!is.vector(batch_label))){
-		stop("Please input a vector for batch_label.")
-	}
-	if((!is.null(clustering_method)) & (!is.vector(clustering_method))){
-		stop("Please input a vector for batch_label.")
-	}
 	## if cand_lab_df is a vector or a data frame with one column
-	vec_or_1col_df = ifelse(is.vector(cand_lab_df), TRUE, dim(cand_lab_df)[2] == 1)
-  if(vec_or_1col_df){
-    return(calculate_CDI_oneset(sub_gcmat = sub_gcmat, 
+	vec_1col_df = ifelse(is.vector(cand_lab_df), TRUE, dim(cand_lab_df)[2] == 1)
+  if(vec_1col_df){
+    return(calculate_CDI_oneset(
+    	sub_gcmat = sub_gcmat, 
     	candidate_label = unlist(cand_lab_df), 
     	batch_label = batch_label, 
     	cell_size_factor = cell_size_factor, 
     	BPPARAM = BPPARAM, 
     	lrt_pval_threshold = lrt_pval_threshold))
-  
   ## if cand_lab_df is a a data frame with more than one column
   } else {
     lab_name <- colnames(cand_lab_df)
     cdi_return_df <- data.frame(Label_name = paste0("Label", seq_len(ncol(cand_lab_df))))
     if(!is.null(lab_name)){
       cdi_return_df["Label_name"] <- lab_name
-      cdi_return_df["Cluster_method"] <- ifelse(str_detect(
-      	string = lab_name, "^(\\w+)(_k)(\\d+)$"), 
+      cdi_return_df["Cluster_method"] <- ifelse(
+      	grepl(pattern = "^(\\w+)(_k)(\\d+)$", x = lab_name, ignore.case = TRUE), 
       	unlist(lapply(strsplit(lab_name, "_"), "[", 1)), 
       	NA)
-    }
+     }
     if(!is.null(clustering_method)){
     	cdi_return_df["Cluster_method"] <- clustering_method
     }
-    cdi_return <- apply(cand_lab_df, 
-    	2, 
-    	calculate_CDI_oneset,
+    cdi_return <- apply(
+    	X = cand_lab_df, 
+    	MARGIN = 2, 
+    	FUN = calculate_CDI_oneset,
     	sub_gcmat = sub_gcmat, 
     	batch_label = batch_label, 
     	cell_size_factor = cell_size_factor,
     	BPPARAM = BPPARAM, 
     	lrt_pval_threshold = lrt_pval_threshold) 
-    cdi_return_df["CDI_AIC"] <- unlist(lapply(cdi_return, "[[", 1))
-    cdi_return_df["CDI_BIC"] <- unlist(lapply(cdi_return, "[[", 2))
-    cdi_return_df["N_cluster"] <- apply(cand_lab_df, 2, function(x) length(unique(x)))
+    tmp_df <- do.call(rbind.data.frame, cdi_return)
+    cdi_return_df <- cbind(cdi_return_df, tmp_df)
     return(cdi_return_df)
   }
 }
