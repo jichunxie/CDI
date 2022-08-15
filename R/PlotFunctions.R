@@ -93,7 +93,7 @@ CDI_lineplot <- function(cdi_dataframe,
     if(!is.null(benchmark_maintype_cdi)){
       p1 <- p1 + geom_point(data = data.frame(
       	N_cluster = benchmark_maintype_ncluster, 
-      	CDI_AIC = benchmark_celltype_cdi$CDI_AIC, 
+      	CDI_AIC = benchmark_maintype_cdi$CDI_AIC, 
       	Cluster_method = "Benchmark"), 
       	colour="#7E6148FF", 
       	shape = "*", 
