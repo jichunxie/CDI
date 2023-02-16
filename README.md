@@ -22,5 +22,7 @@ library(CDI)
 browseVignettes("CDI")
 ```
 ### Related paper
-Available Soon
+Clustering Deviation Index (CDI): a robust and accurate internal measure for evaluating scRNA-seq data clustering
+[https://genomebiology.biomedcentral.com/articles/10.1186/s13059-022-02825-5](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-022-02825-5)
+
 
