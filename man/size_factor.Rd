@@ -4,19 +4,38 @@
 \alias{size_factor}
 \title{Size factor of each cell}
 \usage{
-size_factor(gcmat)
+size_factor(
+  X,
+  seurat_count_slot = "@assays$RNA@counts",
+  sce_count_slot = "count"
+)
 }
 \arguments{
-\item{gcmat}{A raw UMI count matrix where each row represents a gene, and 
-each column represents a cell. The genes should be those before feature gene 
-selection.}
+\item{X}{The class of X can be "matrix", "Seurat" object, or "SingleCellExperiment" object. 
+If X is a matrix, it should be a raw UMI count matrix where each row represents a gene, and 
+each column represents a cell. The genes should only included feature genes 
+(that are selected by feature_gene_selection function).
+If X is a Seurat object, users need to specify where the count matrix, feature gene, and
+batch labels are stored in seurat_count_slot, seurat_feature_slot, and seurat_batch_slot, 
+respectively. 
+If X is a SingleCellExperiment object, users need to specify where the count matrix, 
+feature gene, and batch labels are stored in sce_count_slot, sce_feature_slot, 
+and sce_batch_slot, respectively.}
+
+\item{seurat_count_slot}{A string indicating the location of raw UMI count. The 
+default value is "@assays$RNA@counts". Each row represents a gene, and each column
+represents a cell. The genes should be those before feature gene selection.}
+
+\item{sce_count_slot}{A string indicating the location of raw UMI count in 
+sce object. The default value is "count". Each row represents a gene, and each column 
+represents a cell. The genes should be those before feature gene selection.}
 }
 \value{
 A numeric vector indicating the size factor of the cells. 
 This should be one of the inputs of the function calculate_CDI.
 }
 \description{
-Different cells have different library size. 
+Different cells have different library sizes. 
 This function calculates the size factor of each cell in the UMI count matrix 
 to capture the variation in cell library size.
 }
@@ -39,7 +58,7 @@ colnames(X) <- paste0('c', seq_len(nc))
 rownames(X) <- paste0('g', seq_len(ng))
 
 ## Input: matrix
-size_factor(X)
+cell_size <- size_factor(X = X)
 
 ## Input: SingleCellExperiment object
 library(SingleCellExperiment)
@@ -47,12 +66,13 @@ sim_sce <- SingleCellExperiment(
   list(count = X),
   colData = data.frame(Cell_name = colnames(X)),
 	 rowData = data.frame(Gene_name = rownames(X)))
-size_factor(extract_sce(sim_sce, "count", "count"))
+cell_size <- size_factor(X = sim_sce, sce_count_slot = "count")
 
 ## Input: Seurat object
 library(Seurat)
 library(SeuratObject)
 sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
 sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
+cell_size <- size_factor(X = sim_seurat, seurat_count_slot = "@assays$RNA@counts")
 
 }

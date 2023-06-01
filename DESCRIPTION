@@ -1,6 +1,6 @@
 Package: CDI
-Version: 0.99.14
-Date: 2022-06-28
+Version: 0.99.16
+Date: 2023-06-01
 Title: Clustering Deviation Index (CDI)
 Description: Single-cell RNA-sequencing (scRNA-seq) is widely used to explore cellular variation. 
 	The analysis of scRNA-seq data often starts from clustering cells into subpopulations. 
@@ -9,7 +9,7 @@ Description: Single-cell RNA-sequencing (scRNA-seq) is widely used to explore ce
 	evaluate clustering performance. Hence, we propose clustering deviation index (CDI), an
 	unsupervised metric based on the modeling of scRNA-seq UMI counts to evaluate clustering of 
 	cells.  
-Authors@R: c(person("Jiyuan", "Fang", email = "jfanglovestats@gmail.com", role = c("cre", "aut")), 
+Authors@R: c(person("Jiyuan", "Fang", email = "jfanglovestats@gmail.com", role = c("cre", "aut"), comment=c(ORCID="0000-0002-5004-4138")), 
 	person("Jichun", "Xie", email = "jichun.xie@duke.edu", role = c("ctb")),
 	person("Cliburn", "Chan", email = "cliburn.chan@duke.edu", role = c("ctb")),
 	person("Kouros", "Owzar", email = "kouros.owzar@duke.edu", role = c("ctb")),
@@ -17,13 +17,13 @@ Authors@R: c(person("Jiyuan", "Fang", email = "jfanglovestats@gmail.com", role =
 	person("Diyuan", "Qin", email = "diyuan.qin@duke.edu", role = c("ctb")),
 	person("Qi-Jing", "Li", email = "qi-jing.li@duke.edu", role = c("ctb")),
 	person("Jichun", "Xie", email = "jichun.xie@duke.edu", role = c("ctb")))
-biocViews: SingleCell, Software, Clustering, Visualization, Sequencing, RNASeq
+biocViews: SingleCell, Software, Clustering, Visualization, Sequencing, RNASeq, CellBasedAssays
 URL: https://github.com/jichunxie/CDI
 BugReports: https://github.com/jichunxie/CDI/issues
-Imports: matrixStats, Seurat, SeuratObject, stats, BiocParallel, ggplot2, reshape2, grDevices, ggsci, SingleCellExperiment, SummarizedExperiment, methods
-RoxygenNote: 7.1.1
+Imports: matrixStats, Seurat, SeuratObject, stats, BiocParallel, ggplot2, reshape2, grDevices, ggsci, SingleCellExperiment, SummarizedExperiment
+RoxygenNote: 7.2.3
 Depends: R(>= 4.2)
 Suggests: knitr, rmarkdown, RUnit, BiocGenerics, magick
 VignetteBuilder: knitr
-License: GPL-3
+License: GPL-3 + file LICENSE
 Encoding: UTF-8

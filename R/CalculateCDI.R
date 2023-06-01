@@ -197,17 +197,35 @@ calculate_CDI_oneset <- function(
 ## -----------------------------------------------------------------------------
 #' Size factor of each cell
 #' 
-#' Different cells have different library size. 
+#' Different cells have different library sizes. 
 #' This function calculates the size factor of each cell in the UMI count matrix 
 #' to capture the variation in cell library size. 
 #'
-#' @param gcmat A raw UMI count matrix where each row represents a gene, and 
-#' each column represents a cell. The genes should be those before feature gene 
-#' selection.
+#' @param X The class of X can be "matrix", "Seurat" object, or "SingleCellExperiment" object. 
+#' If X is a matrix, it should be a raw UMI count matrix where each row represents a gene, and 
+#' each column represents a cell. The genes should only included feature genes 
+#' (that are selected by feature_gene_selection function).
+#' If X is a Seurat object, users need to specify where the count matrix, feature gene, and
+#' batch labels are stored in seurat_count_slot, seurat_feature_slot, and seurat_batch_slot, 
+#' respectively. 
+#' If X is a SingleCellExperiment object, users need to specify where the count matrix, 
+#' feature gene, and batch labels are stored in sce_count_slot, sce_feature_slot, 
+#' and sce_batch_slot, respectively.
+#' 
+#' @param seurat_count_slot A string indicating the location of raw UMI count. The 
+#' default value is "@assays$RNA@counts". Each row represents a gene, and each column
+#' represents a cell. The genes should be those before feature gene selection.
+#' 
+#' @param sce_count_slot A string indicating the location of raw UMI count in 
+#' sce object. The default value is "count". Each row represents a gene, and each column 
+#' represents a cell. The genes should be those before feature gene selection.
+#'
 #' @importFrom matrixStats colMedians
+#' @importFrom SingleCellExperiment SingleCellExperiment rowData colData
+#' @importFrom SummarizedExperiment assays
+#' 
 #' @return A numeric vector indicating the size factor of the cells. 
 #' This should be one of the inputs of the function calculate_CDI.
-#'
 #' @examples
 #' 
 #' ng <- 100; nc <- 100
@@ -227,7 +245,7 @@ calculate_CDI_oneset <- function(
 #' rownames(X) <- paste0('g', seq_len(ng))
 #' 
 #' ## Input: matrix
-#' size_factor(X)
+#' cell_size <- size_factor(X = X)
 #' 
 #' ## Input: SingleCellExperiment object
 #' library(SingleCellExperiment)
@@ -235,16 +253,41 @@ calculate_CDI_oneset <- function(
 #'   list(count = X),
 #'   colData = data.frame(Cell_name = colnames(X)),
 #' 	 rowData = data.frame(Gene_name = rownames(X)))
-#' size_factor(extract_sce(sim_sce, "count", "count"))
+#' cell_size <- size_factor(X = sim_sce, sce_count_slot = "count")
 #' 
 #' ## Input: Seurat object
 #' library(Seurat)
 #' library(SeuratObject)
 #' sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
 #' sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
+#' cell_size <- size_factor(X = sim_seurat, seurat_count_slot = "@assays$RNA@counts")
 #' 
 #' @export
-size_factor <- function(gcmat){
+
+
+size_factor <- function(
+	X,
+	seurat_count_slot = "@assays$RNA@counts", 
+	sce_count_slot = "count"){
+	# extract counts
+	X_class = class(X)[1]
+	if(!(X_class %in% c("matrix", "Seurat", "SingleCellExperiment"))){
+		stop("The type of X need to be one of the following: matrix, Seurat object, or SingleCellExperiment object.")
+	}
+	if(X_class == "Seurat"){
+		gcmat <- tryCatch(
+			as.matrix(eval(parse(text = paste0("X", seurat_count_slot)))), 
+			error = function(e) stop("seurat_count_slot is not in Seurat object X."))
+	} else if(X_class == "SingleCellExperiment"){
+		if(!is.null(assays(X)[[sce_count_slot]])){
+			gcmat <- assays(X)[[sce_count_slot]]
+		} else{
+			stop("sce_count_slot is not in SingleCellExperiment object X.")
+		}
+	} else{		
+		assign("gcmat", X)
+	}
+	# calculate size factors
   gcmat[gcmat == 0] <- 0.5
   nc <- ncol(gcmat)
   log_gcmat <- log(gcmat)
@@ -253,6 +296,7 @@ size_factor <- function(gcmat){
   cell_size_factor <- colMedians(ratio_to_ref)
   return(cell_size_factor)
 }
+
 
 
 ## -----------------------------------------------------------------------------
@@ -270,43 +314,79 @@ size_factor <- function(gcmat){
 #' to select optimal subtypes, because BIC puts more penalty on the complexity 
 #' of models (number of clusters). 
 #' 
-#' @param sub_gcmat A raw UMI count matrix where each row represents a gene, and 
+#' @param X The class of X can be "matrix", "Seurat" object, or "SingleCellExperiment" object. 
+#' If X is a matrix, it should be a raw UMI count matrix where each row represents a gene, and 
 #' each column represents a cell. The genes should only included feature genes 
-#' (that are selected by FeatureGeneSelection).
+#' (that are selected by feature_gene_selection function).
+#' If X is a Seurat object, users need to specify where the count matrix, feature gene, and
+#' batch labels are stored in seurat_count_slot, seurat_feature_slot, and seurat_batch_slot, 
+#' respectively. 
+#' If X is a SingleCellExperiment object, users need to specify where the count matrix, 
+#' feature gene, and batch labels are stored in sce_count_slot, sce_feature_slot, 
+#' and sce_batch_slot, respectively.
+#' 
 #' @param cand_lab_df A vector of cluster labels of the cells or 
 #' a data frame where each column corresponds to one set of cluster labels of 
 #' the cells. This (these) label sets can be clustering results obtained by 
 #' any clustering methods. The length (number of rows) of 
 #' cand_lab_df should be the same as the number of columns in 
-#' sub_gcmat. 
+#' the count matrix. 
 #' If the column names of label set data frame are provided with the format 
 #' "[ClusteringMethod]_k[NumberOfClusters]" such as "KMeans_K5, `calculate_CDI` 
 #' will extract the "[ClusteringMethod]" as the Cluster_method. 
 #' The clustering method can also be provided in the 
 #' argument "clustering_method" for each label set. 
+#' 
 #' @param cell_size_factor A numeric vector indicating the size factor 
 #' of the cells. This should be the output of function size_factor. 
 #' The length of batch_label should be the same as the number of columns 
-#' in sub_gcmat. 
+#' in the count matrix. 
+#' 
 #' @param batch_label A vector of characters indicating the batch labels of the cells. 
 #' The length of batch_label should be the same as the number of columns 
-#' in sub_gcmat.
+#' in the count matrix.
+#' 
+#' @param seurat_count_slot A string indicating the location of raw UMI count. The 
+#' default value is "@assays$RNA@counts". Each row represents a gene, and each column
+#' represents a cell. The genes should be those before feature gene selection.
+#' 
+#' @param seurat_batch_slot A string indicating the location of batch labels of 
+#' cells. The default value is "@meta.data$batch". 
+#' 
+#' @param seurat_feature_slot A string indicating the location of selected feature 
+#' genes. The default value is "@assays$RNA@var.features".
+#' 
+#' @param sce_count_slot A string indicating the location of raw UMI count in 
+#' sce object. The default value is "count". Each row represents a gene, and each column 
+#' represents a cell. The genes should be those before feature gene selection.
+#' 
+#' @param sce_batch_slot A string indicating the location of batch labels of 
+#' cells in sce object. The default value is "batch" in colData of sce_obj.
+#' 
+#' @param sce_feature_slot A string indicating the location of selected feature 
+#' genes. The default value is "var.features" in rowData of sce_obj.
+#' 
 #' @param lrt_pval_threshold A numeric value within (0, 1) indicating 
 #' the p-value threshold for the likelihood ratio test (LRT). If multiple 
 #' batches exist, within each cluster and each gene, CDI will test whether 
 #' a batch-common NB model or a batch-specific NB model should be fitted 
 #' with the LRT. If the p-value is less than this threshold, a batch-specific 
 #' NB model will be fitted. Otherwise, a batch-common NB model will be fitted.
+#' 
 #' @param clustering_method A vector of characters indicating the corresponding clustering 
 #' method for each label set. The length of the vector needs to be the same 
 #' as the number of columns in cand_lab_df.
+#' 
 #' @param BPPARAM A \code{\link{BiocParallelParam}} object from the BiocParallel 
 #' package. By specifying this argument, users can control over how to perform 
 #' the parallel computing. Default is \code{\link{SerialParam}} which uses a 
 #' single core.
+#' 
+#' 
 #'        
 #'        
-#' @importFrom SingleCellExperiment SingleCellExperiment
+#' @importFrom SingleCellExperiment SingleCellExperiment rowData colData
+#' @importFrom SummarizedExperiment assays
 #' @importFrom BiocParallel SerialParam bplapply
 #' @importFrom stats nlminb pchisq var
 #' @importFrom matrixStats rowMedians
@@ -318,9 +398,10 @@ size_factor <- function(gcmat){
 #' 
 #'
 #' @examples
-#' ## Simulate count matrix, batch, and cell type labels
+## Simulate count matrix, batch, and cell clustering labels
 #' ng <- 100; nc <- 100
 #' set.seed(1)
+#' # count matrix
 #' X <- cbind(
 #' 	matrix(
 #' 		c(rnbinom(ng*nc/4, size = 1, mu = 0.1),
@@ -334,11 +415,13 @@ size_factor <- function(gcmat){
 #' 		byrow = TRUE))
 #' colnames(X) <- paste0('c', seq_len(nc))
 #' rownames(X) <- paste0('g', seq_len(ng))
+#' # batch label
 #' Batches <- rep(seq_len(2), nc/2)
+#' # cell clustering labels
 #' Method1_k2 <- rep(seq_len(2), c(nc/2,nc/2))
 #' Method1_k3 <- sample(seq_len(3), nc, replace = TRUE)
 #' label_df <- data.frame(
-#' 	Method1_k2 = Method1_k2, 
+#' 	Method1_k2 = Method1_k2,
 #' 	Method1_k3 = Method1_k3)
 #' 
 #' ## select feature genes (see feature_gene_selection function)
@@ -348,9 +431,9 @@ size_factor <- function(gcmat){
 #' size_factor_vec <- rep(1, nc)
 #' 
 #' calculate_CDI(
-#' 	sub_gcmat = X[feature_gene, ],
-#' 	cand_lab_df = label_df, 
-#' 	cell_size_factor = size_factor_vec, 
+#'  X = X[feature_gene, ],
+#' 	cand_lab_df = label_df,
+#' 	cell_size_factor = size_factor_vec,
 #' 	batch_label = Batches)
 #' 
 #' 
@@ -360,16 +443,18 @@ size_factor <- function(gcmat){
 #'   list(count = X),
 #'   colData = data.frame(
 #'     Cell_name = colnames(X),
-#' 		 Batch = Batches,
-#'   	 Method1_k2 = Method1_k2,
-#'   	 Method1_k3 = Method1_k3),
-#' 	rowData = data.frame(Gene_name = rownames(X)))
+#' 		 batch = Batches),
+#' 	 rowData = data.frame(
+#' 	   Gene_name = rownames(X),
+#' 	   var.features = c(seq_len(ng) %in% feature_gene)))
 #' 
 #' calculate_CDI(
-#' 	sub_gcmat = extract_sce(sim_sce, "count", "count")[feature_gene, ],
-#' 	cand_lab_df = extract_sce(sim_sce, "label", c("Method1_k2", "Method1_k3")), 
-#' 	cell_size_factor = size_factor_vec, 
-#' 	batch_label = extract_sce(sim_sce, "batch", "Batch"))
+#'  	X = sim_sce,
+#'  	cand_lab_df = label_df,
+#'  	cell_size_factor = size_factor_vec,
+#'  	sce_count_slot = "count",
+#'  	sce_feature_slot = "var.features",
+#'  	sce_batch_slot = "batch")
 #' 
 #' ## Input: Seurat object
 #' library(Seurat)
@@ -377,15 +462,16 @@ size_factor <- function(gcmat){
 #' sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
 #' sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
 #' sim_seurat <- AddMetaData(sim_seurat, Batches, "Batch")
-#' sim_seurat <- AddMetaData(sim_seurat, Method1_k2, "Method1_k2")
-#' sim_seurat <- AddMetaData(sim_seurat, Method1_k3, "Method1_k3")
+#' sim_seurat@assays$RNA@var.features <- feature_gene
 #' 
 #' calculate_CDI(
-#' 	sub_gcmat = extract_seurat(sim_seurat, "count", "counts")[feature_gene, ],
-#' 	cand_lab_df = extract_seurat(sim_seurat, "label", c("Method1_k2", "Method1_k3")), 
-#' 	cell_size_factor = size_factor_vec, 
-#' 	batch_label = extract_seurat(sim_seurat, "batch", "Batch"))
-#' 	
+#' 	X = sim_seurat,
+#' 	cand_lab_df = label_df,
+#' 	cell_size_factor = size_factor_vec,
+#'  	seurat_count_slot = "@assays$RNA@counts", 
+#'  	seurat_batch_slot = "@meta.data$batch",
+#'  	seurat_feature_slot = "@assays$RNA@var.features")
+#' 
 #' ## parallel computing
 #' library(BiocParallel)
 #' ## single core
@@ -393,9 +479,9 @@ size_factor <- function(gcmat){
 #' ## multi-cores
 #' ## bp_object  <- MulticoreParam(workers = 2)
 #' calculate_CDI(
-#' 	sub_gcmat = X[feature_gene, ],
-#' 	cand_lab_df = label_df, 
-#' 	cell_size_factor = size_factor_vec, 
+#' 	X = X[feature_gene, ],
+#' 	cand_lab_df = label_df,
+#' 	cell_size_factor = size_factor_vec,
 #' 	batch_label = Batches,
 #' 	lrt_pval_threshold = 0.01,
 #' 	clustering_method = NULL,
@@ -406,14 +492,67 @@ size_factor <- function(gcmat){
 #' \doi{https://github.com/Bioconductor/BiocParallel}
 #' @export
 calculate_CDI <- function(
-	sub_gcmat = NULL,
+	X, 
 	cand_lab_df, 
 	cell_size_factor, 
 	batch_label = NULL,
+	seurat_count_slot = "@assays$RNA@counts", 
+	seurat_batch_slot = "@meta.data$batch",
+	seurat_feature_slot = "@assays$RNA@var.features", 
+	sce_count_slot = "count",
+	sce_batch_slot = "batch",
+	sce_feature_slot = "var.features",
 	lrt_pval_threshold = 0.01,
 	clustering_method = NULL,
 	BPPARAM = SerialParam()){
-	# Initialize a BiocParallel object
+	X_class = class(X)[1]
+	if(!(X_class %in% c("matrix", "Seurat", "SingleCellExperiment"))){
+		stop("The type of X need to be one of the following: matrix, Seurat object, or SingleCellExperiment object.")
+	}
+	# Input Seurat object, extract batch and count with selected genes
+	if(X_class == "Seurat"){
+		seurat_nfeature <- tryCatch(
+			length(eval(parse(text = paste0("X", seurat_feature_slot)))), 
+			error = function(e) stop("seurat_feature_slot is not in Seurat object X."))
+  	if (seurat_nfeature != 0) {
+	    gene_indx <- eval(parse(text = paste0("X", seurat_feature_slot)))
+	  } else{ 
+	  	stop("length of feature genes is 0.")
+	  }
+		sub_gcmat <- tryCatch(
+			as.matrix(eval(parse(text = paste0("X", seurat_count_slot)))[gene_indx, ]), 
+			error = function(e) stop("seurat_count_slot is not in Seurat object X."))
+	  batch_label <- tryCatch(
+			eval(parse(text = paste0("X", seurat_batch_slot))), 
+			error = function(e) stop("seurat_batch_slot is not in Seurat object X."))
+	 # Input SingleCellExperiment object, extract batch and count with selected genes
+	} else if(X_class == "SingleCellExperiment"){
+		if(!(sce_feature_slot %in% colnames(rowData(X)))){
+			stop("sce_feature_slot is not in rowData of SingleCellExperiment object X")
+		} else{
+			gene_indx <- which(as.data.frame(rowData(X))[sce_feature_slot] == TRUE)
+			if(length(gene_indx) == 0) stop("length of feature genes is 0.")
+		}
+		if(!is.null(assays(X)[[sce_count_slot]])){
+			sub_gcmat <- assays(X)[[sce_count_slot]][gene_indx, ]
+		} else{
+			stop("sce_count_slot is not in SingleCellExperiment object X.")
+		}
+		# if sce_batch_slot is NULL, there are two cases:
+		# 1. there is no batch label
+		# 2. the batch label is specified in batch_label
+		if(!is.null(sce_batch_slot)){
+			if(!is.null(colData(X)[sce_batch_slot])){
+				batch_label <- colData(X)[[sce_batch_slot]]
+			} else{
+				stop("sce_batch_slot is not in SingleCellExperiment object X.")
+			}
+		}
+	# Input matrix, rename X as sub_gcmat
+	} else {
+		# X_class == "matrix"
+		assign("sub_gcmat", X)
+	}
 	## if cand_lab_df is a vector or a data frame with one column
 	vec_1col_df <- ifelse(is.vector(cand_lab_df), TRUE, dim(cand_lab_df)[2] == 1)
   if(vec_1col_df){
@@ -452,6 +591,5 @@ calculate_CDI <- function(
     return(cdi_return_df)
   }
 }
-
 
 

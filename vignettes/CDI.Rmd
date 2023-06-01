@@ -4,7 +4,7 @@ author:
   - "Jiyuan Fang"
   - "Jichun Xie"
 package: CDI
-date: "Last updated: Nov 3rd 2021"
+date: "Last updated: Jun 1st 2023"
 output:
     BiocStyle::html_document:
         toc: true
@@ -77,7 +77,7 @@ Feature genes are those genes that express differently across cell types. Severa
 
 ```{r, feature_selection}
 feature_gene_indx <- feature_gene_selection(
-	gcmat = one_batch_matrix, 
+	X = one_batch_matrix, 
 	batch_label = NULL, 
 	method = "wds", 
 	nfeature = 500)
@@ -89,7 +89,7 @@ sub_one_batch_matrix <- one_batch_matrix[feature_gene_indx,]
 First, calculate the size factor of each gene with `size_factor`. The output of `size_factor` will be one of the inputs of `calculate_CDI`. 
 
 ```{r}
-one_batch_matrix_size_factor <- size_factor(one_batch_matrix)
+one_batch_matrix_size_factor <- size_factor(X = one_batch_matrix)
 ```
 
 Second, calculate CDI for each candidate set of cell labels:
@@ -97,7 +97,7 @@ Second, calculate CDI for each candidate set of cell labels:
 ```{r, calculate_cdi1}
 start_time <- Sys.time()
 CDI_return1 <- calculate_CDI(
-	sub_gcmat = sub_one_batch_matrix, 
+	X = sub_one_batch_matrix, 
 	cand_lab_df = one_batch_matrix_label_df, 
 	batch_label = NULL, 
 	cell_size_factor = one_batch_matrix_size_factor)
@@ -140,7 +140,7 @@ contingency_heatmap(benchmark_label = one_batch_matrix_celltype,
 We can also calculate the CDI for the benchmark label set as the following:
 
 ```{r}
-benchmark_return1 <- calculate_CDI(sub_gcmat = sub_one_batch_matrix,
+benchmark_return1 <- calculate_CDI(X = sub_one_batch_matrix,
 	cand_lab_df = one_batch_matrix_celltype, 
 	batch_label = NULL, 
 	cell_size_factor = one_batch_matrix_size_factor)
@@ -193,7 +193,7 @@ knitr::kable(head(two_batch_matrix_label_df[,c("KMeans_k5", "KMeans_k6", "Seurat
 
 ```{r, feature_selection2}
 feature_gene_indx <- feature_gene_selection(
-	gcmat = two_batch_matrix,
+	X = two_batch_matrix,
 	batch_label = two_batch_matrix_batch,
 	method = "wds",
 	nfeature = 500)
@@ -207,7 +207,7 @@ two_batch_matrix_size_factor <- size_factor(two_batch_matrix)
 
 start_time <- Sys.time()
 CDI_return2 <- calculate_CDI(
-	sub_gcmat = sub_two_batch_matrix,
+	X = sub_two_batch_matrix,
 	cand_lab_df = two_batch_matrix_label_df, 
 	batch_label = two_batch_matrix_batch,
 	cell_size_factor = two_batch_matrix_size_factor)
@@ -228,7 +228,7 @@ Calculate the benchmark label set (if available) CDI:
   
 ```{r}
 benchmark_return <- calculate_CDI(
-	sub_gcmat = sub_two_batch_matrix,
+	X = sub_two_batch_matrix,
 	cand_lab_df = two_batch_matrix_celltype,
 	batch_label = two_batch_matrix_batch,
 	cell_size_factor = two_batch_matrix_size_factor)
