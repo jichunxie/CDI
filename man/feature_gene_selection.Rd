@@ -7,7 +7,7 @@
 feature_gene_selection(
   X = NULL,
   batch_label = NULL,
-  seurat_count_slot = "@assays$RNA@counts",
+  seurat_count_slot = "counts",
   seurat_batch_slot = NULL,
   sce_count_slot = "count",
   sce_batch_slot = NULL,
@@ -19,39 +19,41 @@ feature_gene_selection(
 \arguments{
 \item{X}{The class of X can be "matrix", "Seurat" object, or "SingleCellExperiment" object. 
 If X is a matrix, it should be a raw UMI count matrix where each row represents a gene, and 
-each column represents a cell. The genes should only included feature genes 
-(that are selected by feature_gene_selection function).
+each column represents a cell. The genes should those before feature gene selection.
 If X is a Seurat object, users need to specify where the count matrix, feature gene, and
-batch labels are stored in seurat_count_slot, seurat_feature_slot, and seurat_batch_slot, 
-respectively. 
+batch labels are stored in seurat_count_slot, and seurat_batch_slot, respectively. 
 If X is a SingleCellExperiment object, users need to specify where the count matrix, 
-feature gene, and batch labels are stored in sce_count_slot, sce_feature_slot, 
-and sce_batch_slot, respectively.}
+and batch labels are stored in sce_count_slot, and sce_batch_slot, respectively.}
 
 \item{batch_label}{A vector of characters indicating the batch labels of the cells. 
 The length of batch_label should be the same as the number of columns 
-in the count matrix.}
+in the count matrix.
+The default value is NULL indicating that there is no batch information available.}
 
-\item{seurat_count_slot}{A string indicating the location of raw UMI count. The 
-default value is "@assays$RNA@counts". Each row represents a gene, and each column
-represents a cell. The genes should be those before feature gene selection.}
+\item{seurat_count_slot}{A string indicating the location of raw UMI count. 
+The default value is "counts" (in "RNA" of "assays"). 
+Each row represents a gene, and each column represents a cell. 
+The genes should be those before feature gene selection.}
 
 \item{seurat_batch_slot}{A string indicating the location of batch labels of 
-cells. The default value is NULL.}
+cells in "meta.data" of Seurat object. 
+The default value is NULL indicating that there is no batch information available.}
 
 \item{sce_count_slot}{A string indicating the location of raw UMI count in 
 sce object. The default value is "count". Each row represents a gene, and each column 
 represents a cell. The genes should be those before feature gene selection.}
 
 \item{sce_batch_slot}{A string indicating the location of batch labels of 
-cells in sce object. The default value is NULL.}
+cells in "colData" of SingleCellExperiment object. 
+The default value is NULL indicating that there is no batch information available.}
 
 \item{method}{A character indicating the method used to select 
 feature genes. "wds" (default) represent the working dispersion score 
 proposed in our study; "vst" is the default method for feature gene selection 
 in FindVariableFeatures function of Seurat package.}
 
-\item{nfeature}{An integer indicating the number of features to select.}
+\item{nfeature}{An integer indicating the number of features to select. 
+The default value is 500.}
 
 \item{zp_threshold}{A number of zero proportion threshold. The range 
 should be (0,1). Genes with 
@@ -104,12 +106,10 @@ sim_sce <- SingleCellExperiment(
 	rowData = data.frame(gene_name = rownames(X)))
 selected_genes <- feature_gene_selection(
   X = sim_sce,
+  sce_count_slot = "count",
   sce_batch_slot = "batch",
   nfeature = 20,
   zp_threshold = 0.95)
-# Record feature genes in sim_sce
-rowData(sim_sce)["var.features"] <- FALSE
-rowData(sim_sce)["var.features"][selected_genes,'var.features'] <- TRUE
 
 ## Input: Seurat object
 library(Seurat)
@@ -119,11 +119,10 @@ sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
 sim_seurat <- AddMetaData(sim_seurat, Batches, "batch")
 selected_genes <- feature_gene_selection(
 	X = sim_seurat,
-	seurat_batch_slot = "@meta.data$batch",
+	seurat_count_slot = "counts",
+	seurat_batch_slot = "batch",
 	nfeature = 20,
 	zp_threshold = 0.95)
-# Record feature genes in sim_seurat
-sim_seurat@assays$RNA@var.features <- selected_genes
                      
 }
 \references{

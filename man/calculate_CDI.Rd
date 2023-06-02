@@ -6,15 +6,14 @@
 \usage{
 calculate_CDI(
   X,
+  feature_gene_index = NULL,
   cand_lab_df,
   cell_size_factor,
   batch_label = NULL,
-  seurat_count_slot = "@assays$RNA@counts",
-  seurat_batch_slot = "@meta.data$batch",
-  seurat_feature_slot = "@assays$RNA@var.features",
+  seurat_count_slot = "counts",
+  seurat_batch_slot = NULL,
   sce_count_slot = "count",
-  sce_batch_slot = "batch",
-  sce_feature_slot = "var.features",
+  sce_batch_slot = NULL,
   lrt_pval_threshold = 0.01,
   clustering_method = NULL,
   BPPARAM = SerialParam()
@@ -22,15 +21,21 @@ calculate_CDI(
 }
 \arguments{
 \item{X}{The class of X can be "matrix", "Seurat" object, or "SingleCellExperiment" object. 
-If X is a matrix, it should be a raw UMI count matrix where each row represents a gene, and 
-each column represents a cell. The genes should only included feature genes 
-(that are selected by feature_gene_selection function).
-If X is a Seurat object, users need to specify where the count matrix, feature gene, and
-batch labels are stored in seurat_count_slot, seurat_feature_slot, and seurat_batch_slot, 
-respectively. 
-If X is a SingleCellExperiment object, users need to specify where the count matrix, 
-feature gene, and batch labels are stored in sce_count_slot, sce_feature_slot, 
-and sce_batch_slot, respectively.}
+If X is a matrix, it should be a UMI count matrix where each row represents a gene, and 
+each column represents a cell. 
+If X is a Seurat object, users need to specify where the count matrix and
+batch labels are stored in seurat_count_slot and seurat_batch_slot, respectively. 
+If X is a SingleCellExperiment object, users need to specify where the count matrix, and 
+batch labels are stored in sce_count_slot and sce_batch_slot, respectively.
+If feature_gene_index is NULL, genes in X should only included feature genes 
+(that are selected by feature_gene_selection function); if feature_gene_index
+is not NULL, this function will extract a subset of X 
+with genes indexed by feature_gene_index.}
+
+\item{feature_gene_index}{A vector of unique integers indicating the indices of feature 
+genes. The default value if NULL, which means all genes in X will be used to 
+calculate CDI. The integers in feature_gene_index need to be no greater than 
+the number of genes in X.}
 
 \item{cand_lab_df}{A vector of cluster labels of the cells or 
 a data frame where each column corresponds to one set of cluster labels of 
@@ -53,25 +58,22 @@ in the count matrix.}
 The length of batch_label should be the same as the number of columns 
 in the count matrix.}
 
-\item{seurat_count_slot}{A string indicating the location of raw UMI count. The 
-default value is "@assays$RNA@counts". Each row represents a gene, and each column
-represents a cell. The genes should be those before feature gene selection.}
+\item{seurat_count_slot}{A string indicating the location of raw UMI count. 
+The default value is "counts" (in "RNA" of "assays"). 
+Each row represents a gene, and each column represents a cell. 
+The genes should be those before feature gene selection.}
 
 \item{seurat_batch_slot}{A string indicating the location of batch labels of 
-cells. The default value is "@meta.data$batch".}
-
-\item{seurat_feature_slot}{A string indicating the location of selected feature 
-genes. The default value is "@assays$RNA@var.features".}
+cells in "meta.data" of Seurat object. 
+The default value is NULL indicating that there is no batch information available.}
 
 \item{sce_count_slot}{A string indicating the location of raw UMI count in 
 sce object. The default value is "count". Each row represents a gene, and each column 
 represents a cell. The genes should be those before feature gene selection.}
 
 \item{sce_batch_slot}{A string indicating the location of batch labels of 
-cells in sce object. The default value is "batch" in colData of sce_obj.}
-
-\item{sce_feature_slot}{A string indicating the location of selected feature 
-genes. The default value is "var.features" in rowData of sce_obj.}
+cells in "colData" of SingleCellExperiment object. 
+The default value is NULL indicating that there is no batch information available.}
 
 \item{lrt_pval_threshold}{A numeric value within (0, 1) indicating 
 the p-value threshold for the likelihood ratio test (LRT). If multiple 
@@ -133,13 +135,13 @@ label_df <- data.frame(
 	Method1_k3 = Method1_k3)
 
 ## select feature genes (see feature_gene_selection function)
-feature_gene <- seq_len(30)
+selected_genes <- seq_len(30)
 
 ## calculate size factor (see size_factor function)
 size_factor_vec <- rep(1, nc)
 
 calculate_CDI(
- X = X[feature_gene, ],
+ X = X[selected_genes, ],
 	cand_lab_df = label_df,
 	cell_size_factor = size_factor_vec,
 	batch_label = Batches)
@@ -153,15 +155,14 @@ sim_sce <- SingleCellExperiment(
     Cell_name = colnames(X),
 		 batch = Batches),
 	 rowData = data.frame(
-	   Gene_name = rownames(X),
-	   var.features = c(seq_len(ng) \%in\% feature_gene)))
+	   Gene_name = rownames(X)))
 
 calculate_CDI(
  	X = sim_sce,
+ 	feature_gene_index = selected_genes, 
  	cand_lab_df = label_df,
  	cell_size_factor = size_factor_vec,
  	sce_count_slot = "count",
- 	sce_feature_slot = "var.features",
  	sce_batch_slot = "batch")
 
 ## Input: Seurat object
@@ -169,16 +170,15 @@ library(Seurat)
 library(SeuratObject)
 sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
 sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
-sim_seurat <- AddMetaData(sim_seurat, Batches, "Batch")
-sim_seurat@assays$RNA@var.features <- feature_gene
+sim_seurat <- AddMetaData(sim_seurat, Batches, "batch")
 
 calculate_CDI(
 	X = sim_seurat,
+	feature_gene_index = selected_genes,
 	cand_lab_df = label_df,
 	cell_size_factor = size_factor_vec,
- 	seurat_count_slot = "@assays$RNA@counts", 
- 	seurat_batch_slot = "@meta.data$batch",
- 	seurat_feature_slot = "@assays$RNA@var.features")
+ 	seurat_count_slot = "counts", 
+ 	seurat_batch_slot = "batch")
 
 ## parallel computing
 library(BiocParallel)
@@ -187,7 +187,7 @@ bp_object <- SerialParam()
 ## multi-cores
 ## bp_object  <- MulticoreParam(workers = 2)
 calculate_CDI(
-	X = X[feature_gene, ],
+	X = X[selected_genes, ],
 	cand_lab_df = label_df,
 	cell_size_factor = size_factor_vec,
 	batch_label = Batches,

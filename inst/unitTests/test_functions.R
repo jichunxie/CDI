@@ -27,7 +27,7 @@ test_calculate_CDI <- function() {
 	
 	## select feature genes
 	nf = 30
-	feature_gene <- seq_len(nf)
+	selected_genes <- seq_len(nf)
 	
 	## calculate size factor
 	size_factor_vec <- rep(1, nc)
@@ -40,30 +40,55 @@ test_calculate_CDI <- function() {
 	    Cell_name = colnames(X),
 			 batch = Batches),
 		 rowData = data.frame(
-		   Gene_name = rownames(X),
-		   var.features = c(seq_len(ng) %in% feature_gene)))
+		   Gene_name = rownames(X)))
 	
 	## Input: Seurat object
 	library(Seurat)
 	library(SeuratObject)
 	sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
 	sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
-	sim_seurat <- AddMetaData(sim_seurat, Batches, "Batch")
-	sim_seurat@assays$RNA@var.features <- feature_gene
+	sim_seurat <- AddMetaData(sim_seurat, Batches, "batch")
 	
 	# correct input
-	matrix_CDI <- calculate_CDI(X = X, cand_lab_df = label_df, cell_size_factor = size_factor_vec)
+	## matrix
+	matrix_CDI <- calculate_CDI(X = X[selected_genes,], 
+		cand_lab_df = label_df, 
+		cell_size_factor = size_factor_vec)
 	checkEquals(matrix_CDI[which.min(matrix_CDI$CDI_BIC), "Label_name"], "TrueLab")
-	sce_CDI <- calculate_CDI(X = sim_sce, cand_lab_df = label_df, cell_size_factor = size_factor_vec)
+	## sce
+	sce_CDI <- calculate_CDI(X = sim_sce, 
+		feature_gene_index = selected_genes, 
+		cand_lab_df = label_df, 
+		cell_size_factor = size_factor_vec)
 	checkEquals(sce_CDI[which.min(sce_CDI$CDI_BIC), "Label_name"], "TrueLab")
-	seurat_CDI <- calculate_CDI(X = sim_seurat, cand_lab_df = label_df, cell_size_factor = size_factor_vec)
+	## seurat
+	seurat_CDI <- calculate_CDI(X = sim_seurat, 
+		feature_gene_index = selected_genes, 
+		seurat_count_slot = "counts",
+		cand_lab_df = label_df, 
+		cell_size_factor = size_factor_vec)
 	checkEquals(seurat_CDI[which.min(seurat_CDI$CDI_BIC), "Label_name"], "TrueLab")
 	
 	# incorrect input should generate error
-	checkTrue(tryCatch(calculate_CDI(X = sim_sce, cand_lab_df = label_df, cell_size_factor = size_factor_vec, sce_count_slot = "unknown"), error = function(e) return(TRUE)))
-	checkTrue(tryCatch(calculate_CDI(X = sim_sce, cand_lab_df = label_df, cell_size_factor = size_factor_vec, sce_batch_slot = "unknown"), error = function(e) return(TRUE)))
-	checkTrue(tryCatch(calculate_CDI(X = sim_seurat, cand_lab_df = label_df, cell_size_factor = size_factor_vec, seurat_count_slot = "unknown"), error = function(e) return(TRUE)))
-	checkTrue(tryCatch(calculate_CDI(X = sim_seurat, cand_lab_df = label_df, cell_size_factor = size_factor_vec, seurat_batch_slot = "unknown"), error = function(e) return(TRUE)))
+	checkTrue(tryCatch(calculate_CDI(X = X, 
+		feature_gene_index = seq_len(ng + 10),
+		cand_lab_df = label_df, 
+		cell_size_factor = size_factor_vec), error = function(e) return(TRUE)))
+	checkTrue(tryCatch(calculate_CDI(X = sim_sce, 
+		feature_gene_index = selected_genes, 
+		cand_lab_df = label_df, 
+		cell_size_factor = size_factor_vec, 
+		sce_batch_slot = "unknown"), error = function(e) return(TRUE)))
+	checkTrue(tryCatch(calculate_CDI(X = sim_seurat, 
+		feature_gene_index = selected_genes, 
+		cand_lab_df = label_df,
+		cell_size_factor = size_factor_vec, 
+		seurat_count_slot = "unknown"), error = function(e) return(TRUE)))
+	checkTrue(tryCatch(calculate_CDI(X = sim_seurat, 
+		feature_gene_index = selected_genes, 
+		cand_lab_df = label_df, 
+		cell_size_factor = size_factor_vec, 
+		seurat_batch_slot = "unknown"), error = function(e) return(TRUE)))
 	
 	
 }
@@ -103,13 +128,16 @@ test_size_factor <- function() {
 	sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
 	sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
 	
-	## Check 
+	# Check 
+	## matrix
 	sf_return <- size_factor(X)
 	checkEquals(sum(sf_return > 0), ncol(X))
+	## sce
 	sf_return <- size_factor(sim_sce, sce_count_slot = "count")
 	checkEquals(sum(sf_return > 0), ncol(X))
 	checkTrue(tryCatch(size_factor(X = sim_sce, sce_count_slot = "unknown"), error = function(e) return(TRUE)))
-	sf_return <- size_factor(sim_seurat, seurat_count_slot = "@assays$RNA@counts")
+	## seurat
+	sf_return <- size_factor(sim_seurat, seurat_count_slot = "counts")
 	checkEquals(sum(sf_return > 0), ncol(X))
 	checkTrue(tryCatch(size_factor(X = sim_seurat, seurat_count_slot = "unknown"), error = function(e) return(TRUE)))
 }
@@ -149,18 +177,36 @@ test_feature_selection <- function() {
 	library(SeuratObject)
 	sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
 	sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
-	sim_seurat <- AddMetaData(sim_seurat, Batches, "Batch")
+	sim_seurat <- AddMetaData(sim_seurat, Batches, "batch")
 	
 	nf = 20
 	# correct input
 	checkEquals(length(feature_gene_selection(X = X, nfeature = nf)), nf)
-	checkEquals(length(feature_gene_selection(X = sim_sce, sce_count_slot = "count", sce_batch_slot = "batch", nfeature = nf)), nf)
-	checkEquals(length(feature_gene_selection(X = sim_seurat, seurat_count_slot = "@assays$RNA@counts", sce_batch_slot = "@meta.data$batch", nfeature = nf)), nf)
+	checkEquals(length(feature_gene_selection(X = sim_sce, 
+		sce_count_slot = "count", 
+		sce_batch_slot = "batch", 
+		nfeature = nf)), nf)
+	 checkEquals(length(feature_gene_selection(X = sim_seurat, 
+		seurat_count_slot = "counts", 
+		seurat_batch_slot = "batch", 
+		nfeature = nf)), nf)
 	# incorrect input
-	checkTrue(tryCatch(feature_gene_selection(X = sim_sce, sce_count_slot = "unknown", nfeature = nf), error = function(e) return(TRUE)))
-	checkTrue(tryCatch(feature_gene_selection(X = sim_sce, sce_batch_slot = "unknown", nfeature = nf), error = function(e) return(TRUE)))
-	checkTrue(tryCatch(feature_gene_selection(X = sim_seurat, seurat_count_slot = "unknown", nfeature = nf), error = function(e) return(TRUE)))
-	checkTrue(tryCatch(feature_gene_selection(X = sim_seurat, seurat_batch_slot = "unknown", nfeature = nf), error = function(e) return(TRUE)))
+	checkTrue(tryCatch(feature_gene_selection(X = sim_sce, 
+		sce_count_slot = "unknown", 
+		sce_batch_slot = "batch",
+		nfeature = nf), error = function(e) return(TRUE)))
+	checkTrue(tryCatch(feature_gene_selection(X = sim_sce, 
+		sce_count_slot = "count",
+		sce_batch_slot = "unknown",
+		nfeature = nf), error = function(e) return(TRUE)))
+	checkTrue(tryCatch(feature_gene_selection(X = sim_seurat, 
+		seurat_count_slot = "unknown", 
+		seurat_batch_slot = "batch", 
+		nfeature = nf), error = function(e) return(TRUE)))
+	checkTrue(tryCatch(feature_gene_selection(X = sim_seurat, 
+		seurat_count_slot = "counts", 
+		seurat_batch_slot = "unknown", 
+		nfeature = nf), error = function(e) return(TRUE)))
 		
 	
 }

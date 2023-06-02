@@ -4,27 +4,22 @@
 \alias{size_factor}
 \title{Size factor of each cell}
 \usage{
-size_factor(
-  X,
-  seurat_count_slot = "@assays$RNA@counts",
-  sce_count_slot = "count"
-)
+size_factor(X, seurat_count_slot = "counts", sce_count_slot = "count")
 }
 \arguments{
 \item{X}{The class of X can be "matrix", "Seurat" object, or "SingleCellExperiment" object. 
 If X is a matrix, it should be a raw UMI count matrix where each row represents a gene, and 
-each column represents a cell. The genes should only included feature genes 
-(that are selected by feature_gene_selection function).
-If X is a Seurat object, users need to specify where the count matrix, feature gene, and
-batch labels are stored in seurat_count_slot, seurat_feature_slot, and seurat_batch_slot, 
+each column represents a cell. The genes should be those before feature gene selection.
+If X is a Seurat object, users need to specify where the count matrix and
+batch labels are stored in seurat_count_slot and seurat_batch_slot, 
 respectively. 
 If X is a SingleCellExperiment object, users need to specify where the count matrix, 
-feature gene, and batch labels are stored in sce_count_slot, sce_feature_slot, 
-and sce_batch_slot, respectively.}
+and batch labels are stored in sce_count_slot, and sce_batch_slot, respectively.}
 
-\item{seurat_count_slot}{A string indicating the location of raw UMI count. The 
-default value is "@assays$RNA@counts". Each row represents a gene, and each column
-represents a cell. The genes should be those before feature gene selection.}
+\item{seurat_count_slot}{A string indicating the location of raw UMI count. 
+The default value is "counts" (in "RNA" of "assays"). 
+Each row represents a gene, and each column represents a cell. 
+The genes should be those before feature gene selection.}
 
 \item{sce_count_slot}{A string indicating the location of raw UMI count in 
 sce object. The default value is "count". Each row represents a gene, and each column 
@@ -73,6 +68,6 @@ library(Seurat)
 library(SeuratObject)
 sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
 sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
-cell_size <- size_factor(X = sim_seurat, seurat_count_slot = "@assays$RNA@counts")
+cell_size <- size_factor(X = sim_seurat, seurat_count_slot = "counts")
 
 }
