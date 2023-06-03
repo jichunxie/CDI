@@ -4,6 +4,7 @@
 #' This matrix contains raw UMI count matrix simulated from the Negative Binomial(NB) mixture distribution. 
 #' The code simulating this matrix can be found in data-raw/one_batch_simulation.R.
 #' 
+#' @docType data
 #' 
 #' @usage data(one_batch_matrix)
 #' 
@@ -27,7 +28,6 @@
 #' 'one_batch_matrix_celltype", and the cell clustering results generated from 
 #' two clustering methods are in "one_batch_matrix_label_df".
 #' 
-#' 
 "one_batch_matrix"
 
 #' Cell type labels of simulated count matrix from one batch
@@ -37,12 +37,13 @@
 #' This is the true label set corresponds to the cells in the one_batch_matrix. 
 #' The code simulating this vector can be found in data-raw/one_batch_simulation.R.
 #' 
+#' @docType data
+#' 
 #' @usage data(one_batch_matrix_celltype)
 #'
 #' @format A vector of 2,000 characters indicating the cell types of the 
 #' reference cells. For each cell type, there are 400 cells with the name 
 #' "type1-5". 
-
 #' 
 "one_batch_matrix_celltype"
 
@@ -55,6 +56,8 @@
 #' be {2,3,..., 7}. 
 #' The code simulating this vector can be found in data-raw/one_batch_simulation.R.
 #'
+#' @docType data
+#' 
 #' @usage data(one_batch_matrix_label_df)
 #'
 #' @format A data frame of 2,000 rows and 12 columns. Each row represents a cell. 
@@ -72,6 +75,8 @@
 #' Binomial(NB) mixture distribution. 
 #' The code simulating this vector can be found in data-raw/two_batch_simulation.R.
 #'
+#' @docType data
+#' 
 #' @usage data(two_batch_matrix)
 #' 
 #' @format A matrix with 3,000 genes (rows) and 2,000 cells (columns). 
@@ -102,6 +107,8 @@
 #' This is the batch label set corresponds to the cells in the two_batch_matrix. 
 #' The code simulating this vector can be found in data-raw/two_batch_simulation.R.
 #' 
+#' @docType data
+#' 
 #' @usage data(two_batch_matrix_batch)
 #' 
 #' @format A vector of 2,000 characters indicating the batch labels of cells 
@@ -113,6 +120,8 @@
 #'
 #' @description 
 #' This is the true label set corresponds to the cells in the two_batch_matrix. 
+#' 
+#' @docType data
 #' 
 #' @usage data(two_batch_matrix_celltype)
 #'
@@ -131,6 +140,8 @@
 #' and Seurat with 2000 (default) feature genes.
 #' The number of clusters are set to be {2,3,..., 10}. 
 #' The code simulating this vector can be found in data-raw/two_batch_simulation.R.
+#' 
+#' @docType data
 #' 
 #' @usage data(two_batch_matrix_label_df)
 #' 

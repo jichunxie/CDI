@@ -29,12 +29,12 @@ para.set$N0 <- sum(para.set$ncell)
 
 # simulate mean and dispersion parameters
 generic_mu <- 0.2
-mu <- matrix(rep(round(rtruncnorm(para.set$ngene, a=0.001, b=1, 
-	mean=generic_mu, sd=0.1), 4), para.set$K), 
-	nrow=para.set$ngene)
-r <- matrix(rep(round(rtruncnorm(para.set$ngene, a =0.2, b=5, 
-	mean=0.5, sd=0.1), 4), para.set$K), 
-	nrow=para.set$ngene)
+mu <- matrix(rep(round(rtruncnorm(para.set$ngene, a = 0.001, b = 1, 
+	mean = generic_mu, sd = 0.1), 4), para.set$K), 
+	nrow = para.set$ngene)
+r <- matrix(rep(round(rtruncnorm(para.set$ngene, a = 0.2, b = 5, 
+	mean = 0.5, sd = 0.1), 4), para.set$K), 
+	nrow = para.set$ngene)
 
 ns <- para.set$nsig
 nz <- round(para.set$nsig/3)
