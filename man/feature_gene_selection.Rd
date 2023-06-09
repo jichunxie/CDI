@@ -5,12 +5,10 @@
 \title{Select feature genes}
 \usage{
 feature_gene_selection(
-  X = NULL,
+  X,
   batch_label = NULL,
-  seurat_count_slot = "counts",
-  seurat_batch_slot = NULL,
-  sce_count_slot = "count",
-  sce_batch_slot = NULL,
+  count_slot = NULL,
+  batch_slot = NULL,
   method = "wds",
   nfeature = 500,
   zp_threshold = 0.95
@@ -18,33 +16,30 @@ feature_gene_selection(
 }
 \arguments{
 \item{X}{The class of X can be "matrix", "Seurat" object, or "SingleCellExperiment" object. 
-If X is a matrix, it should be a raw UMI count matrix where each row represents a gene, and 
-each column represents a cell. The genes should those before feature gene selection.
-If X is a Seurat object, users need to specify where the count matrix, feature gene, and
-batch labels are stored in seurat_count_slot, and seurat_batch_slot, respectively. 
-If X is a SingleCellExperiment object, users need to specify where the count matrix, 
-and batch labels are stored in sce_count_slot, and sce_batch_slot, respectively.}
+If X is a matrix, it should be a UMI count matrix where each row represents a gene, and 
+each column represents a cell. 
+If X is a Seurat object or SingleCellExperiment object, 
+users need to specify where the count matrix, and 
+batch labels are stored in count_slot and batch_slot, respectively.
+If feature_gene_index is NULL, genes in X should only included feature genes 
+(that are selected by feature_gene_selection function); if feature_gene_index
+is not NULL, this function will extract a subset of X 
+with genes indexed by feature_gene_index.}
 
 \item{batch_label}{A vector of characters indicating the batch labels of the cells. 
 The length of batch_label should be the same as the number of columns 
 in the count matrix.
 The default value is NULL indicating that there is no batch information available.}
 
-\item{seurat_count_slot}{A string indicating the location of raw UMI count. 
-The default value is "counts" (in "RNA" of "assays"). 
+\item{count_slot}{A string indicating the location of raw UMI count. 
+For Seurat object, it is a slot in "RNA" of "assays"; 
+For SingleCellExperiment object, it is a slot in "assays". 
 Each row represents a gene, and each column represents a cell. 
 The genes should be those before feature gene selection.}
 
-\item{seurat_batch_slot}{A string indicating the location of batch labels of 
-cells in "meta.data" of Seurat object. 
-The default value is NULL indicating that there is no batch information available.}
-
-\item{sce_count_slot}{A string indicating the location of raw UMI count in 
-sce object. The default value is "count". Each row represents a gene, and each column 
-represents a cell. The genes should be those before feature gene selection.}
-
-\item{sce_batch_slot}{A string indicating the location of batch labels of 
-cells in "colData" of SingleCellExperiment object. 
+\item{batch_slot}{A string indicating the location of batch labels of cells.
+For Seurat object, it is a slot in meta.data;
+For SingleCellExperiment object, it is a slot in "colData". 
 The default value is NULL indicating that there is no batch information available.}
 
 \item{method}{A character indicating the method used to select 
@@ -106,8 +101,8 @@ sim_sce <- SingleCellExperiment(
 	rowData = data.frame(gene_name = rownames(X)))
 selected_genes <- feature_gene_selection(
   X = sim_sce,
-  sce_count_slot = "count",
-  sce_batch_slot = "batch",
+  count_slot = "count",
+  batch_slot = "batch",
   nfeature = 20,
   zp_threshold = 0.95)
 
@@ -119,8 +114,8 @@ sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
 sim_seurat <- AddMetaData(sim_seurat, Batches, "batch")
 selected_genes <- feature_gene_selection(
 	X = sim_seurat,
-	seurat_count_slot = "counts",
-	seurat_batch_slot = "batch",
+	count_slot = "counts",
+	batch_slot = "batch",
 	nfeature = 20,
 	zp_threshold = 0.95)
                      

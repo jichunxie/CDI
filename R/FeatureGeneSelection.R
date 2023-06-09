@@ -3,14 +3,14 @@
 ## -----------------------------------------------------------------------------
 ##  rank genes for one batch
 one_batch_feature_gene_rank <- function(
-	gcmat = NULL, 
+	gcmat, 
 	method = "wds", 
 	nfeature = 500,
 	zp_threshold = 0.95){
 	## count genes and cells
 	ng <- nrow(gcmat)
   nc <- ncol(gcmat)
-	## Gene selection via wds
+  ## Gene selection via wds
 	if(method == "wds"){
 		zp <- rowMeans(gcmat == 0)
     zp_indx <- c(seq_len(ng))[zp < zp_threshold]
@@ -59,33 +59,26 @@ one_batch_feature_gene_rank <- function(
 #'
 #'
 #' @param X The class of X can be "matrix", "Seurat" object, or "SingleCellExperiment" object. 
-#' If X is a matrix, it should be a raw UMI count matrix where each row represents a gene, and 
-#' each column represents a cell. The genes should those before feature gene selection.
-#' If X is a Seurat object, users need to specify where the count matrix, feature gene, and
-#' batch labels are stored in seurat_count_slot, and seurat_batch_slot, respectively. 
-#' If X is a SingleCellExperiment object, users need to specify where the count matrix, 
-#' and batch labels are stored in sce_count_slot, and sce_batch_slot, respectively.
+#' If X is a matrix, it should be a UMI count matrix where each row represents a gene, and 
+#' each column represents a cell. 
+#' If X is a Seurat object or SingleCellExperiment object, 
+#' users need to specify where the count matrix, and 
+#' batch labels are stored in count_slot and batch_slot, respectively.
 #' 
 #' @param batch_label A vector of characters indicating the batch labels of the cells. 
 #' The length of batch_label should be the same as the number of columns 
 #' in the count matrix.
 #' The default value is NULL indicating that there is no batch information available. 
 #' 
-#' @param seurat_count_slot A string indicating the location of raw UMI count. 
-#' The default value is "counts" (in "RNA" of "assays"). 
+#' @param count_slot A string indicating the location of raw UMI count. 
+#' For Seurat object, it is a slot in "RNA" of "assays"; 
+#' For SingleCellExperiment object, it is a slot in "assays". 
 #' Each row represents a gene, and each column represents a cell. 
 #' The genes should be those before feature gene selection.
 #' 
-#' @param seurat_batch_slot A string indicating the location of batch labels of 
-#' cells in "meta.data" of Seurat object. 
-#' The default value is NULL indicating that there is no batch information available. 
-#' 
-#' @param sce_count_slot A string indicating the location of raw UMI count in 
-#' sce object. The default value is "count". Each row represents a gene, and each column 
-#' represents a cell. The genes should be those before feature gene selection.
-#' 
-#' @param sce_batch_slot A string indicating the location of batch labels of 
-#' cells in "colData" of SingleCellExperiment object. 
+#' @param batch_slot A string indicating the location of batch labels of cells.
+#' For Seurat object, it is a slot in meta.data;
+#' For SingleCellExperiment object, it is a slot in "colData". 
 #' The default value is NULL indicating that there is no batch information available. 
 #' 
 #' @param method A character indicating the method used to select 
@@ -102,9 +95,11 @@ one_batch_feature_gene_rank <- function(
 #' 
 #' @importFrom matrixStats rowVars rowMins
 #' @importFrom SeuratObject AddMetaData
-#' @importFrom Seurat CreateSeuratObject NormalizeData FindVariableFeatures
+#' @importFrom Seurat CreateSeuratObject NormalizeData FindVariableFeatures GetAssayData FetchData
 #' @importFrom SingleCellExperiment SingleCellExperiment rowData colData
 #' @importFrom SummarizedExperiment assays
+#' @importFrom methods is
+#' 
 #' @return A vector of indices of selected feature genes corresponding to the 
 #' row indices of input count matrix.
 #'
@@ -147,8 +142,8 @@ one_batch_feature_gene_rank <- function(
 #' 	rowData = data.frame(gene_name = rownames(X)))
 #' selected_genes <- feature_gene_selection(
 #'   X = sim_sce,
-#'   sce_count_slot = "count",
-#'   sce_batch_slot = "batch",
+#'   count_slot = "count",
+#'   batch_slot = "batch",
 #'   nfeature = 20,
 #'   zp_threshold = 0.95)
 #' 
@@ -160,8 +155,8 @@ one_batch_feature_gene_rank <- function(
 #' sim_seurat <- AddMetaData(sim_seurat, Batches, "batch")
 #' selected_genes <- feature_gene_selection(
 #' 	X = sim_seurat,
-#' 	seurat_count_slot = "counts",
-#' 	seurat_batch_slot = "batch",
+#' 	count_slot = "counts",
+#' 	batch_slot = "batch",
 #' 	nfeature = 20,
 #' 	zp_threshold = 0.95)
 #'                      
@@ -171,51 +166,18 @@ one_batch_feature_gene_rank <- function(
 #' @export
 #' 
 feature_gene_selection <- function(
-	X = NULL, 
+	X, 
 	batch_label = NULL,
-	seurat_count_slot = "counts", 
-	seurat_batch_slot = NULL,
-	sce_count_slot = "count",
-	sce_batch_slot = NULL,
+	count_slot = NULL, 
+	batch_slot = NULL,
 	method = "wds",
 	nfeature = 500,
 	zp_threshold = 0.95){
-	X_class = class(X)[1]
-	if(!(X_class %in% c("matrix", "Seurat", "SingleCellExperiment"))){
-		stop("The type of X need to be one of the following: matrix, Seurat object, or SingleCellExperiment object.")
-	}
-	if(X_class == "Seurat"){
-		  # Seurat generates error if the seurat_count_slot doesn't exist
-	    gcmat <- tryCatch(
-			as.matrix(eval(parse(text = paste0("X@assays$RNA@", seurat_count_slot)))), 
-			error = function(e) stop("seurat_count_slot is not in Seurat object X."))
-	    if(!is.null(seurat_batch_slot)){
-		  	if(!is.null(X@meta.data[[seurat_batch_slot]])){
-		  		batch_label <- X@meta.data[[seurat_batch_slot]]
-		  	} else{
-		    		stop("seurat_batch_slot is not in Seurat object X.")
-		  	}
-	  	}
-	} else if(X_class == "SingleCellExperiment"){
-		if(!is.null(assays(X)[[sce_count_slot]])){
-			gcmat <- assays(X)[[sce_count_slot]]
-		} else{
-			stop("sce_count_slot is not in SingleCellExperiment object X.")
-		}
-		# if sce_batch_slot is NULL, there are two cases:
-		# Either there is no batch label, or the batch label is specified in batch_label
-		# Both cases won't affect the following procedures. 
-		# So only need to consider when sce_batch_slot is not NULL. 
-		if(!is.null(sce_batch_slot)){
-			if(!is.null(colData(X)[sce_batch_slot])){
-				batch_label <- colData(X)[[sce_batch_slot]]
-			} else{
-				stop("sce_batch_slot is not in SingleCellExperiment object X.")
-			}
-		}
-	} else{
-		# X_class == "matrix"
-		assign("gcmat", X)
+	# extract count and batch
+	gcmat <- extract_count(X, count_slot)
+	batch_label <- extract_batch(X, batch_label, batch_slot)
+	if(!is.null(batch_label) & length(batch_label) != ncol(gcmat)){
+		stop("the length of batch_label does not match the number of cells (columns) in X.")
 	}
 	ng <- nrow(gcmat)
 	## One batch
