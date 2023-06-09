@@ -1,5 +1,5 @@
 Package: CDI
-Version: 0.99.16
+Version: 0.99.20
 Date: 2023-06-01
 Title: Clustering Deviation Index (CDI)
 Description: Single-cell RNA-sequencing (scRNA-seq) is widely used to explore cellular variation. 
@@ -20,9 +20,9 @@ Authors@R: c(person("Jiyuan", "Fang", email = "jfanglovestats@gmail.com", role =
 biocViews: SingleCell, Software, Clustering, Visualization, Sequencing, RNASeq, CellBasedAssays
 URL: https://github.com/jichunxie/CDI
 BugReports: https://github.com/jichunxie/CDI/issues
-Imports: matrixStats, Seurat, SeuratObject, stats, BiocParallel, ggplot2, reshape2, grDevices, ggsci, SingleCellExperiment, SummarizedExperiment
+Imports: matrixStats, Seurat, SeuratObject, stats, BiocParallel, ggplot2, reshape2, grDevices, ggsci, SingleCellExperiment, SummarizedExperiment, methods
 RoxygenNote: 7.2.3
-Depends: R(>= 4.2)
+Depends: R(>= 4.3)
 Suggests: knitr, rmarkdown, RUnit, BiocGenerics, magick
 VignetteBuilder: knitr
 License: GPL-3 + file LICENSE

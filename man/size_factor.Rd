@@ -4,26 +4,20 @@
 \alias{size_factor}
 \title{Size factor of each cell}
 \usage{
-size_factor(X, seurat_count_slot = "counts", sce_count_slot = "count")
+size_factor(X, count_slot = NULL)
 }
 \arguments{
 \item{X}{The class of X can be "matrix", "Seurat" object, or "SingleCellExperiment" object. 
 If X is a matrix, it should be a raw UMI count matrix where each row represents a gene, and 
 each column represents a cell. The genes should be those before feature gene selection.
-If X is a Seurat object, users need to specify where the count matrix and
-batch labels are stored in seurat_count_slot and seurat_batch_slot, 
-respectively. 
-If X is a SingleCellExperiment object, users need to specify where the count matrix, 
-and batch labels are stored in sce_count_slot, and sce_batch_slot, respectively.}
+If X is a Seurat object or SingleCellExperiment object, users need to specify where the count 
+matrix is stored in count_slot.}
 
-\item{seurat_count_slot}{A string indicating the location of raw UMI count. 
-The default value is "counts" (in "RNA" of "assays"). 
+\item{count_slot}{A string indicating the location of raw UMI count. 
+For Seurat object, it is a slot in "RNA" of "assays"; 
+For SingleCellExperiment object, it is a slot in "assays". 
 Each row represents a gene, and each column represents a cell. 
 The genes should be those before feature gene selection.}
-
-\item{sce_count_slot}{A string indicating the location of raw UMI count in 
-sce object. The default value is "count". Each row represents a gene, and each column 
-represents a cell. The genes should be those before feature gene selection.}
 }
 \value{
 A numeric vector indicating the size factor of the cells. 
@@ -61,13 +55,13 @@ sim_sce <- SingleCellExperiment(
   list(count = X),
   colData = data.frame(Cell_name = colnames(X)),
 	 rowData = data.frame(Gene_name = rownames(X)))
-cell_size <- size_factor(X = sim_sce, sce_count_slot = "count")
+cell_size <- size_factor(X = sim_sce, count_slot = "count")
 
 ## Input: Seurat object
 library(Seurat)
 library(SeuratObject)
 sim_seurat <- CreateSeuratObject(counts = as.data.frame(X))
 sim_seurat <- AddMetaData(sim_seurat, colnames(X), "Cell_name")
-cell_size <- size_factor(X = sim_seurat, seurat_count_slot = "counts")
+cell_size <- size_factor(X = sim_seurat, count_slot = "counts")
 
 }

@@ -59,12 +59,13 @@ test_calculate_CDI <- function() {
 	sce_CDI <- calculate_CDI(X = sim_sce, 
 		feature_gene_index = selected_genes, 
 		cand_lab_df = label_df, 
+		count_slot = "count",
 		cell_size_factor = size_factor_vec)
 	checkEquals(sce_CDI[which.min(sce_CDI$CDI_BIC), "Label_name"], "TrueLab")
 	## seurat
 	seurat_CDI <- calculate_CDI(X = sim_seurat, 
 		feature_gene_index = selected_genes, 
-		seurat_count_slot = "counts",
+		count_slot = "counts",
 		cand_lab_df = label_df, 
 		cell_size_factor = size_factor_vec)
 	checkEquals(seurat_CDI[which.min(seurat_CDI$CDI_BIC), "Label_name"], "TrueLab")
@@ -78,17 +79,17 @@ test_calculate_CDI <- function() {
 		feature_gene_index = selected_genes, 
 		cand_lab_df = label_df, 
 		cell_size_factor = size_factor_vec, 
-		sce_batch_slot = "unknown"), error = function(e) return(TRUE)))
+		batch_slot = "unknown"), error = function(e) return(TRUE)))
 	checkTrue(tryCatch(calculate_CDI(X = sim_seurat, 
 		feature_gene_index = selected_genes, 
 		cand_lab_df = label_df,
 		cell_size_factor = size_factor_vec, 
-		seurat_count_slot = "unknown"), error = function(e) return(TRUE)))
+		count_slot = "unknown"), error = function(e) return(TRUE)))
 	checkTrue(tryCatch(calculate_CDI(X = sim_seurat, 
 		feature_gene_index = selected_genes, 
 		cand_lab_df = label_df, 
 		cell_size_factor = size_factor_vec, 
-		seurat_batch_slot = "unknown"), error = function(e) return(TRUE)))
+		batch_slot = "unknown"), error = function(e) return(TRUE)))
 	
 	
 }
@@ -133,13 +134,13 @@ test_size_factor <- function() {
 	sf_return <- size_factor(X)
 	checkEquals(sum(sf_return > 0), ncol(X))
 	## sce
-	sf_return <- size_factor(sim_sce, sce_count_slot = "count")
+	sf_return <- size_factor(sim_sce, count_slot = "count")
 	checkEquals(sum(sf_return > 0), ncol(X))
-	checkTrue(tryCatch(size_factor(X = sim_sce, sce_count_slot = "unknown"), error = function(e) return(TRUE)))
+	checkTrue(tryCatch(size_factor(X = sim_sce, count_slot = "unknown"), error = function(e) return(TRUE)))
 	## seurat
-	sf_return <- size_factor(sim_seurat, seurat_count_slot = "counts")
+	sf_return <- size_factor(sim_seurat, count_slot = "counts")
 	checkEquals(sum(sf_return > 0), ncol(X))
-	checkTrue(tryCatch(size_factor(X = sim_seurat, seurat_count_slot = "unknown"), error = function(e) return(TRUE)))
+	checkTrue(tryCatch(size_factor(X = sim_seurat, count_slot = "unknown"), error = function(e) return(TRUE)))
 }
 
 test_feature_selection <- function() {
@@ -181,31 +182,33 @@ test_feature_selection <- function() {
 	
 	nf = 20
 	# correct input
-	checkEquals(length(feature_gene_selection(X = X, nfeature = nf)), nf)
+	checkEquals(length(feature_gene_selection(X = X, 
+		batch_label = Batches, 
+		nfeature = nf)), nf)
 	checkEquals(length(feature_gene_selection(X = sim_sce, 
-		sce_count_slot = "count", 
-		sce_batch_slot = "batch", 
+		count_slot = "count", 
+		batch_slot = "batch", 
 		nfeature = nf)), nf)
 	 checkEquals(length(feature_gene_selection(X = sim_seurat, 
-		seurat_count_slot = "counts", 
-		seurat_batch_slot = "batch", 
+		count_slot = "counts", 
+		batch_slot = "batch", 
 		nfeature = nf)), nf)
 	# incorrect input
 	checkTrue(tryCatch(feature_gene_selection(X = sim_sce, 
-		sce_count_slot = "unknown", 
-		sce_batch_slot = "batch",
+		count_slot = "unknown", 
+		batch_slot = "batch",
 		nfeature = nf), error = function(e) return(TRUE)))
 	checkTrue(tryCatch(feature_gene_selection(X = sim_sce, 
-		sce_count_slot = "count",
-		sce_batch_slot = "unknown",
+		count_slot = "count",
+		batch_slot = "unknown",
 		nfeature = nf), error = function(e) return(TRUE)))
 	checkTrue(tryCatch(feature_gene_selection(X = sim_seurat, 
-		seurat_count_slot = "unknown", 
-		seurat_batch_slot = "batch", 
+		count_slot = "unknown", 
+		batch_slot = "batch", 
 		nfeature = nf), error = function(e) return(TRUE)))
 	checkTrue(tryCatch(feature_gene_selection(X = sim_seurat, 
-		seurat_count_slot = "counts", 
-		seurat_batch_slot = "unknown", 
+		count_slot = "counts", 
+		batch_slot = "unknown", 
 		nfeature = nf), error = function(e) return(TRUE)))
 		
 	

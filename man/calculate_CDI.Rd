@@ -10,10 +10,8 @@ calculate_CDI(
   cand_lab_df,
   cell_size_factor,
   batch_label = NULL,
-  seurat_count_slot = "counts",
-  seurat_batch_slot = NULL,
-  sce_count_slot = "count",
-  sce_batch_slot = NULL,
+  count_slot = NULL,
+  batch_slot = NULL,
   lrt_pval_threshold = 0.01,
   clustering_method = NULL,
   BPPARAM = SerialParam()
@@ -23,10 +21,9 @@ calculate_CDI(
 \item{X}{The class of X can be "matrix", "Seurat" object, or "SingleCellExperiment" object. 
 If X is a matrix, it should be a UMI count matrix where each row represents a gene, and 
 each column represents a cell. 
-If X is a Seurat object, users need to specify where the count matrix and
-batch labels are stored in seurat_count_slot and seurat_batch_slot, respectively. 
-If X is a SingleCellExperiment object, users need to specify where the count matrix, and 
-batch labels are stored in sce_count_slot and sce_batch_slot, respectively.
+If X is a Seurat object or SingleCellExperiment object, 
+users need to specify where the count matrix and 
+batch labels are stored in count_slot and batch_slot, respectively.
 If feature_gene_index is NULL, genes in X should only included feature genes 
 (that are selected by feature_gene_selection function); if feature_gene_index
 is not NULL, this function will extract a subset of X 
@@ -51,28 +48,22 @@ argument "clustering_method" for each label set.}
 
 \item{cell_size_factor}{A numeric vector indicating the size factor 
 of the cells. This should be the output of function size_factor. 
-The length of batch_label should be the same as the number of columns 
+The length of cell_size_factor should be the same as the number of columns 
 in the count matrix.}
 
 \item{batch_label}{A vector of characters indicating the batch labels of the cells. 
 The length of batch_label should be the same as the number of columns 
 in the count matrix.}
 
-\item{seurat_count_slot}{A string indicating the location of raw UMI count. 
-The default value is "counts" (in "RNA" of "assays"). 
+\item{count_slot}{A string indicating the location of raw UMI count. 
+For Seurat object, it is a slot in "RNA" of "assays"; 
+For SingleCellExperiment object, it is a slot in "assays". 
 Each row represents a gene, and each column represents a cell. 
 The genes should be those before feature gene selection.}
 
-\item{seurat_batch_slot}{A string indicating the location of batch labels of 
-cells in "meta.data" of Seurat object. 
-The default value is NULL indicating that there is no batch information available.}
-
-\item{sce_count_slot}{A string indicating the location of raw UMI count in 
-sce object. The default value is "count". Each row represents a gene, and each column 
-represents a cell. The genes should be those before feature gene selection.}
-
-\item{sce_batch_slot}{A string indicating the location of batch labels of 
-cells in "colData" of SingleCellExperiment object. 
+\item{batch_slot}{A string indicating the location of batch labels of cells.
+For Seurat object, it is a slot in meta.data;
+For SingleCellExperiment object, it is a slot in "colData". 
 The default value is NULL indicating that there is no batch information available.}
 
 \item{lrt_pval_threshold}{A numeric value within (0, 1) indicating 
@@ -92,9 +83,7 @@ the parallel computing. Default is \code{\link{SerialParam}} which uses a
 single core.}
 }
 \value{
-calculate_CDI returns a list of CDI-AIC and CDI-BIC values if the cand_lab_df 
-is a vector or a data frame with 1 column. It returns a data frame with 5 columns if the 
-cand_lab_df is a data frame with multiple columns. In the second case, the columns are 
+calculate_CDI returns a data frame with 5 columns. The columns are 
 Label_name (name of each label set), Cluster_method (clustering method), CDI-AIC, 
 CDI-BIC, and N_cluster (number of clusters). Each row corresponds to one set of cell labels.
 }
@@ -111,6 +100,7 @@ of models (number of clusters).
 \examples{
 ng <- 100; nc <- 100
 set.seed(1)
+
 # count matrix
 X <- cbind(
 	matrix(
@@ -125,8 +115,10 @@ X <- cbind(
 		byrow = TRUE))
 colnames(X) <- paste0('c', seq_len(nc))
 rownames(X) <- paste0('g', seq_len(ng))
+
 # batch label
 Batches <- rep(seq_len(2), nc/2)
+
 # cell clustering labels
 Method1_k2 <- rep(seq_len(2), c(nc/2,nc/2))
 Method1_k3 <- sample(seq_len(3), nc, replace = TRUE)
@@ -146,7 +138,6 @@ calculate_CDI(
 	cell_size_factor = size_factor_vec,
 	batch_label = Batches)
 
-
 ## Input: SingleCellExperiment object
 library(SingleCellExperiment)
 sim_sce <- SingleCellExperiment(
@@ -162,8 +153,8 @@ calculate_CDI(
  	feature_gene_index = selected_genes, 
  	cand_lab_df = label_df,
  	cell_size_factor = size_factor_vec,
- 	sce_count_slot = "count",
- 	sce_batch_slot = "batch")
+ 	count_slot = "count",
+ 	batch_slot = "batch")
 
 ## Input: Seurat object
 library(Seurat)
@@ -177,8 +168,8 @@ calculate_CDI(
 	feature_gene_index = selected_genes,
 	cand_lab_df = label_df,
 	cell_size_factor = size_factor_vec,
- 	seurat_count_slot = "counts", 
- 	seurat_batch_slot = "batch")
+ count_slot = "counts", 
+ batch_slot = "batch")
 
 ## parallel computing
 library(BiocParallel)
