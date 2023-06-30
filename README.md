@@ -11,7 +11,7 @@ This package has been accepted by Bioconductor. From Oct 2023, you can download 
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
-BiocManager::install("scmap")
+BiocManager::install("CDI")
 
 ```
 
