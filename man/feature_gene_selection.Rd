@@ -20,11 +20,7 @@ If X is a matrix, it should be a UMI count matrix where each row represents a ge
 each column represents a cell. 
 If X is a Seurat object or SingleCellExperiment object, 
 users need to specify where the count matrix, and 
-batch labels are stored in count_slot and batch_slot, respectively.
-If feature_gene_index is NULL, genes in X should only included feature genes 
-(that are selected by feature_gene_selection function); if feature_gene_index
-is not NULL, this function will extract a subset of X 
-with genes indexed by feature_gene_index.}
+batch labels are stored in count_slot and batch_slot, respectively.}
 
 \item{batch_label}{A vector of characters indicating the batch labels of the cells. 
 The length of batch_label should be the same as the number of columns 

@@ -11,6 +11,8 @@
 * Revised according to comments from Luke. The revision mainly focuses on inputing SingleCellExperiment object and parallel computing. Submitted to Bioconductor.
 
 
-## Changes in version 0.99.3 (2023-06-01)
+## Changes in version 0.99.18 (2023-06-01)
 
 * Revised according to comments from Luke. The revision mainly focuses on inputing different types of inputs (matrix, Seurat object, and SingleCellExperiment object). Submitted to Bioconductor.
+
+## Package accepted by Bioconductor (2023-06-30)

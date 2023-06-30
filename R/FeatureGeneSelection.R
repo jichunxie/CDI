@@ -41,7 +41,7 @@ one_batch_feature_gene_rank <- function(
     	nfeatures = nfeature, 
     	verbose = FALSE)
     tmp_df <- data.frame(
-    	gname = Seurat_obj@assays[["RNA"]]@var.features, 
+    	gname = VariableFeatures(Seurat_obj),
     	grank = seq_len(nfeature))
     gene_indx_name[as.character(tmp_df$gname), "grank"] <- tmp_df$grank
     return(gene_indx_name$grank)
@@ -95,7 +95,7 @@ one_batch_feature_gene_rank <- function(
 #' 
 #' @importFrom matrixStats rowVars rowMins
 #' @importFrom SeuratObject AddMetaData
-#' @importFrom Seurat CreateSeuratObject NormalizeData FindVariableFeatures GetAssayData FetchData
+#' @importFrom Seurat CreateSeuratObject NormalizeData FindVariableFeatures GetAssayData FetchData VariableFeatures
 #' @importFrom SingleCellExperiment SingleCellExperiment rowData colData
 #' @importFrom SummarizedExperiment assays
 #' @importFrom methods is
