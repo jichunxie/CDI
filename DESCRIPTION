@@ -23,7 +23,7 @@ BugReports: https://github.com/jichunxie/CDI/issues
 Imports: matrixStats, Seurat, SeuratObject, stats, BiocParallel, ggplot2, reshape2, grDevices, ggsci, SingleCellExperiment, SummarizedExperiment, methods
 RoxygenNote: 7.2.3
 Depends: R(>= 3.6)
-Suggests: knitr, rmarkdown, RUnit, BiocGenerics, magick
+Suggests: knitr, rmarkdown, RUnit, BiocGenerics, magick, BiocStyle
 VignetteBuilder: knitr
 License: GPL-3 + file LICENSE
 Encoding: UTF-8

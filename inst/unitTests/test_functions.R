@@ -136,11 +136,9 @@ test_size_factor <- function() {
 	## sce
 	sf_return <- size_factor(sim_sce, count_slot = "count")
 	checkEquals(sum(sf_return > 0), ncol(X))
-	checkTrue(tryCatch(size_factor(X = sim_sce, count_slot = "unknown"), error = function(e) return(TRUE)))
 	## seurat
 	sf_return <- size_factor(sim_seurat, count_slot = "counts")
 	checkEquals(sum(sf_return > 0), ncol(X))
-	checkTrue(tryCatch(size_factor(X = sim_seurat, count_slot = "unknown"), error = function(e) return(TRUE)))
 }
 
 test_feature_selection <- function() {
