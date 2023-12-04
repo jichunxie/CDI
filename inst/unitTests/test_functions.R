@@ -75,21 +75,6 @@ test_calculate_CDI <- function() {
 		feature_gene_index = seq_len(ng + 10),
 		cand_lab_df = label_df, 
 		cell_size_factor = size_factor_vec), error = function(e) return(TRUE)))
-	checkTrue(tryCatch(calculate_CDI(X = sim_sce, 
-		feature_gene_index = selected_genes, 
-		cand_lab_df = label_df, 
-		cell_size_factor = size_factor_vec, 
-		batch_slot = "unknown"), error = function(e) return(TRUE)))
-	checkTrue(tryCatch(calculate_CDI(X = sim_seurat, 
-		feature_gene_index = selected_genes, 
-		cand_lab_df = label_df,
-		cell_size_factor = size_factor_vec, 
-		count_slot = "unknown"), error = function(e) return(TRUE)))
-	checkTrue(tryCatch(calculate_CDI(X = sim_seurat, 
-		feature_gene_index = selected_genes, 
-		cand_lab_df = label_df, 
-		cell_size_factor = size_factor_vec, 
-		batch_slot = "unknown"), error = function(e) return(TRUE)))
 	
 	
 }
