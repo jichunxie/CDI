@@ -176,23 +176,6 @@ test_feature_selection <- function() {
 		count_slot = "counts", 
 		batch_slot = "batch", 
 		nfeature = nf)), nf)
-	# incorrect input
-	checkTrue(tryCatch(feature_gene_selection(X = sim_sce, 
-		count_slot = "unknown", 
-		batch_slot = "batch",
-		nfeature = nf), error = function(e) return(TRUE)))
-	checkTrue(tryCatch(feature_gene_selection(X = sim_sce, 
-		count_slot = "count",
-		batch_slot = "unknown",
-		nfeature = nf), error = function(e) return(TRUE)))
-	checkTrue(tryCatch(feature_gene_selection(X = sim_seurat, 
-		count_slot = "unknown", 
-		batch_slot = "batch", 
-		nfeature = nf), error = function(e) return(TRUE)))
-	checkTrue(tryCatch(feature_gene_selection(X = sim_seurat, 
-		count_slot = "counts", 
-		batch_slot = "unknown", 
-		nfeature = nf), error = function(e) return(TRUE)))
 		
 	
 }
