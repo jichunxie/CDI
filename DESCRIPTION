@@ -1,5 +1,5 @@
 Package: CDI
-Version: 1.0.1
+Version: 1.0.2
 Date: 2023-06-01
 Title: Clustering Deviation Index (CDI)
 Description: Single-cell RNA-sequencing (scRNA-seq) is widely used to explore cellular variation. 
